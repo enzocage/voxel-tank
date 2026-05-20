@@ -1,11 +1,7 @@
 // Web Audio API and Synthesizer sound generation
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-let musicInterval = null;
-let currentStep = 0;
-
 export const audioState = {
-    isMusicPlaying: true,
     isSfxEnabled: true,
     isSoundtrackPlaying: false,
     soundtrackVolume: 0.1
@@ -119,62 +115,6 @@ export function playSound(type, extra = {}) {
     }
 }
 
-export function startSynthwaveMusic() {
-    if (musicInterval) clearInterval(musicInterval);
-    if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-    }
-    
-    const bassline = [36, 36, 43, 43, 39, 39, 41, 41];
-    
-    musicInterval = setInterval(() => {
-        if (!audioState.isMusicPlaying) return;
-        
-        try {
-            const now = audioCtx.currentTime;
-            const midiNote = bassline[currentStep % bassline.length];
-            const freq = Math.pow(2, (midiNote - 69) / 12) * 440;
-            
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(freq, now);
-            
-            const filter = audioCtx.createBiquadFilter();
-            filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(300, now);
-            
-            gain.gain.setValueAtTime(0.12, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-            
-            osc.connect(filter);
-            filter.connect(gain);
-            gain.connect(audioCtx.destination);
-            
-            osc.start(now);
-            osc.stop(now + 0.4);
-            
-            if (currentStep % 4 === 2) {
-                const hGain = audioCtx.createGain();
-                const hOsc = audioCtx.createOscillator();
-                hOsc.type = 'triangle';
-                hOsc.frequency.setValueAtTime(10000, now);
-                hGain.gain.setValueAtTime(0.015, now);
-                hGain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-                hOsc.connect(hGain);
-                hGain.connect(audioCtx.destination);
-                hOsc.start(now);
-                hOsc.stop(now + 0.05);
-            }
-            
-            currentStep++;
-        } catch (e) {
-            console.log("Music error", e);
-        }
-    }, 300);
-}
-
 export function resumeAudioContext() {
     if (audioCtx.state === 'suspended') {
         audioCtx.resume();
@@ -190,10 +130,6 @@ export function toggleSoundtrack() {
         soundtrack.pause();
         audioState.isSoundtrackPlaying = false;
     } else {
-        audioState.isMusicPlaying = false;
-        const musicIcon = document.getElementById('btn-toggle-music')?.querySelector('i');
-        if (musicIcon) musicIcon.className = "fa-solid fa-music-slash text-slate-500";
-
         soundtrack.play().catch(e => console.warn("Soundtrack play failed:", e));
         audioState.isSoundtrackPlaying = true;
     }

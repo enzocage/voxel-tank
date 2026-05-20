@@ -2,7 +2,7 @@
 import { GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, BLOCK_SIZE } from './constants.js';
 import { state, tanks, projectiles, particles } from './state.js';
 import { generateTerrain, buildTerrainMesh, getBlock } from './terrain.js';
-import { audioState, playSound, startSynthwaveMusic, soundtrack, toggleSoundtrack, setSoundtrackVolume } from './audio.js';
+import { audioState, playSound, soundtrack, toggleSoundtrack, setSoundtrackVolume } from './audio.js';
 import { spawnTanks } from './tank.js';
 import { setupInput, startCharging, fireProjectile } from './input.js';
 import { updateWindUI, setPhase, selectTank, nextTurn, updateUI } from './ui.js';
@@ -333,25 +333,6 @@ document.getElementById('btn-skip-turn').addEventListener('click', () => {
     nextTurn();
 });
 
-document.getElementById('btn-toggle-music').addEventListener('click', (e) => {
-    audioState.isMusicPlaying = !audioState.isMusicPlaying;
-    const icon = e.currentTarget.querySelector('i');
-    if (audioState.isMusicPlaying) {
-        icon.className = "fa-solid fa-music text-indigo-400";
-        if (audioState.isSoundtrackPlaying) {
-            soundtrack.pause();
-            audioState.isSoundtrackPlaying = false;
-            const playIcon = document.getElementById('btn-play-soundtrack')?.querySelector('i');
-            if (playIcon) playIcon.className = "fa-solid fa-play text-[8px]";
-            const playBtn = document.getElementById('btn-play-soundtrack');
-            if (playBtn) playBtn.classList.add('animate-pulse');
-        }
-    } else {
-        icon.className = "fa-solid fa-music-slash text-slate-500";
-    }
-    playSound('click');
-});
-
 document.getElementById('btn-toggle-sfx').addEventListener('click', (e) => {
     audioState.isSfxEnabled = !audioState.isSfxEnabled;
     const icon = e.currentTarget.querySelector('i');
@@ -390,7 +371,12 @@ document.getElementById('btn-start-game').addEventListener('click', () => {
     const intro = document.getElementById('intro-modal');
     intro.classList.add('opacity-0', 'pointer-events-none');
     
-    startSynthwaveMusic();
+    toggleSoundtrack();
+    if (playBtn) {
+        const playIcon = playBtn.querySelector('i');
+        if (playIcon) playIcon.className = "fa-solid fa-pause text-[8px]";
+        playBtn.classList.remove('animate-pulse');
+    }
 });
 
 window.onload = function () {
