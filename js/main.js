@@ -2,7 +2,7 @@
 import { GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, BLOCK_SIZE } from './constants.js';
 import { state, tanks, projectiles, particles } from './state.js';
 import { generateTerrain, buildTerrainMesh, getBlock } from './terrain.js';
-import { audioState, playSound, startSynthwaveMusic } from './audio.js';
+import { audioState, playSound, startSynthwaveMusic, soundtrack, toggleSoundtrack, setSoundtrackVolume } from './audio.js';
 import { spawnTanks } from './tank.js';
 import { setupInput, startCharging, fireProjectile } from './input.js';
 import { updateWindUI, setPhase, selectTank, nextTurn, updateUI } from './ui.js';
@@ -338,6 +338,14 @@ document.getElementById('btn-toggle-music').addEventListener('click', (e) => {
     const icon = e.currentTarget.querySelector('i');
     if (audioState.isMusicPlaying) {
         icon.className = "fa-solid fa-music text-indigo-400";
+        if (audioState.isSoundtrackPlaying) {
+            soundtrack.pause();
+            audioState.isSoundtrackPlaying = false;
+            const playIcon = document.getElementById('btn-play-soundtrack')?.querySelector('i');
+            if (playIcon) playIcon.className = "fa-solid fa-play text-[8px]";
+            const playBtn = document.getElementById('btn-play-soundtrack');
+            if (playBtn) playBtn.classList.add('animate-pulse');
+        }
     } else {
         icon.className = "fa-solid fa-music-slash text-slate-500";
     }
@@ -354,6 +362,28 @@ document.getElementById('btn-toggle-sfx').addEventListener('click', (e) => {
     }
     playSound('click');
 });
+
+const playBtn = document.getElementById('btn-play-soundtrack');
+const volSlider = document.getElementById('slider-soundtrack-vol');
+if (playBtn && volSlider) {
+    playBtn.addEventListener('click', () => {
+        toggleSoundtrack();
+        const playIcon = playBtn.querySelector('i');
+        if (audioState.isSoundtrackPlaying) {
+            playIcon.className = "fa-solid fa-pause text-[8px]";
+            playBtn.classList.remove('animate-pulse');
+        } else {
+            playIcon.className = "fa-solid fa-play text-[8px]";
+            playBtn.classList.add('animate-pulse');
+        }
+        playSound('click');
+    });
+
+    volSlider.addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value);
+        setSoundtrackVolume(val);
+    });
+}
 
 document.getElementById('btn-start-game').addEventListener('click', () => {
     playSound('click');

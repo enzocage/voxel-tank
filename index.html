@@ -92,13 +92,13 @@
         <!-- Footer: Steuerung, Schussbalken und Aktions-Optionen -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 w-full items-end pointer-events-auto">
             
-            <!-- Linke Steuerungsinfos (Kontextabhängig verkleinert) -->
-            <div class="cyber-panel rounded-lg p-2 shadow-md max-w-[260px] hidden md:block">
+            <!-- Linke Steuerungsinfos & Musik -->
+            <div class="cyber-panel rounded-lg p-2.5 shadow-md max-w-[260px] w-full">
                 <div class="flex justify-between items-center mb-1">
                     <h3 class="cyber-font text-[8px] font-bold text-indigo-400 tracking-wider">AKTUELLE STEUERUNG</h3>
                     <!-- Ton-Optionen -->
                     <div class="flex gap-1.5">
-                        <button id="btn-toggle-music" class="text-[9px] text-slate-400 hover:text-indigo-400 p-0.5" title="Musik an/aus">
+                        <button id="btn-toggle-music" class="text-[9px] text-slate-400 hover:text-indigo-400 p-0.5" title="Procedural Music an/aus">
                             <i class="fa-solid fa-music"></i>
                         </button>
                         <button id="btn-toggle-sfx" class="text-[9px] text-slate-400 hover:text-indigo-400 p-0.5" title="Effekte an/aus">
@@ -107,8 +107,24 @@
                     </div>
                 </div>
                 <!-- Dynamischer Hilfe-Text je nach Phase -->
-                <div id="controls-help-text" class="space-y-0.5 text-[9px] text-slate-400 tech-font">
+                <div id="controls-help-text" class="space-y-0.5 text-[9px] text-slate-400 tech-font hidden md:block">
                     <!-- Wird per JS befüllt -->
+                </div>
+                
+                <!-- Soundtrack Player -->
+                <div class="border-t border-slate-800 pt-1.5 mt-1.5">
+                    <div class="flex items-center justify-between gap-1">
+                        <div class="flex items-center gap-1">
+                            <button id="btn-play-soundtrack" class="h-5 w-5 rounded bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center cursor-pointer transition-colors shadow-sm animate-pulse" title="Soundtrack abspielen">
+                                <i class="fa-solid fa-play text-[8px]"></i>
+                            </button>
+                            <span class="cyber-font text-[8px] text-slate-400 font-bold uppercase truncate max-w-[85px]" title="C64 Remix: Lightforce">Lightforce</span>
+                        </div>
+                        <div class="flex items-center gap-1 w-20">
+                            <i class="fa-solid fa-volume-low text-[8px] text-slate-500"></i>
+                            <input type="range" id="slider-soundtrack-vol" min="0" max="1" step="0.05" value="0.1" class="w-full h-0.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                        </div>
+                    </div>
                 </div>
             </div>
 

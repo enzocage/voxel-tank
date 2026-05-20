@@ -6,7 +6,9 @@ let currentStep = 0;
 
 export const audioState = {
     isMusicPlaying: true,
-    isSfxEnabled: true
+    isSfxEnabled: true,
+    isSoundtrackPlaying: false,
+    soundtrackVolume: 0.1
 };
 
 export function playSound(type, extra = {}) {
@@ -177,4 +179,27 @@ export function resumeAudioContext() {
     if (audioCtx.state === 'suspended') {
         audioCtx.resume();
     }
+}
+
+export const soundtrack = new Audio('https://nu.vgmtreasurechest.com/soundtracks/c64-remix-2018/deigeeid/01.%20Lightforce.mp3');
+soundtrack.loop = true;
+soundtrack.volume = 0.1;
+
+export function toggleSoundtrack() {
+    if (audioState.isSoundtrackPlaying) {
+        soundtrack.pause();
+        audioState.isSoundtrackPlaying = false;
+    } else {
+        audioState.isMusicPlaying = false;
+        const musicIcon = document.getElementById('btn-toggle-music')?.querySelector('i');
+        if (musicIcon) musicIcon.className = "fa-solid fa-music-slash text-slate-500";
+
+        soundtrack.play().catch(e => console.warn("Soundtrack play failed:", e));
+        audioState.isSoundtrackPlaying = true;
+    }
+}
+
+export function setSoundtrackVolume(vol) {
+    audioState.soundtrackVolume = vol;
+    soundtrack.volume = vol;
 }
