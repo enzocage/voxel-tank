@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Voxel Panzer Taktik - 3-Phasen Edition</title>
+    <!-- Tailwind CSS für die Benutzeroberfläche -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome für schicke Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Three.js für die 3D-Grafik -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- OrbitControls für Kameraführung -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- Spielspezifische Styles -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="text-slate-200 font-sans select-none overflow-hidden text-xs">
+
+    <!-- Haupt-UI-Overlay (Kompakt und transparent) -->
+    <div id="ui-container" class="absolute inset-0 pointer-events-none z-10 flex flex-col justify-between p-3 md:p-4">
+        
+        <!-- Header: Spieler-Status, Phasen- & Runden-Anzeige -->
+        <div class="flex flex-row justify-between items-start w-full gap-2 pointer-events-auto">
+            
+            <!-- P1 Status-Card (Neon Green) -->
+            <div id="player1-card" class="cyber-panel neon-glow-p1 rounded-lg p-2.5 w-44 md:w-52 transition-all duration-300">
+                <div class="flex items-center justify-between mb-1.5">
+                    <span class="cyber-font text-[9px] font-bold text-emerald-400 tracking-wider flex items-center gap-1">
+                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping"></span> SPIELER 1
+                    </span>
+                    <span id="p1-tanks-count" class="tech-font text-xs text-emerald-300 font-bold">5/5 Panzer</span>
+                </div>
+                <div class="space-y-1" id="p1-tanks-list">
+                    <!-- Wird dynamisch befüllt -->
+                </div>
+            </div>
+
+            <!-- Zentrale Runden-Anzeige mit Phasen-Status -->
+            <div class="flex flex-col items-center gap-1.5">
+                <div class="cyber-panel border-indigo-500/30 rounded-xl px-4 py-1.5 shadow-md text-center min-w-[200px]">
+                    <span class="text-[8px] uppercase tracking-[0.2em] text-indigo-400 font-black block mb-0.5">Runde</span>
+                    <div id="turn-display" class="cyber-font text-[10px] font-bold text-emerald-400">SPIELER 1 AM ZUG</div>
+                    <!-- Phasen-Anzeige -->
+                    <div id="phase-badge" class="cyber-font text-[10px] text-amber-400 font-bold mt-1 px-2 py-0.5 bg-amber-950/40 rounded-full border border-amber-500/30 inline-block uppercase tracking-wider">
+                        Phase 1: Panzer wählen
+                    </div>
+                    <div id="turn-timer" class="tech-font text-[10px] text-slate-300 mt-1">Aktionen: <span id="actions-left" class="text-indigo-400 font-extrabold">15 AP</span></div>
+                </div>
+
+                <!-- Windanzeige -->
+                <div class="cyber-panel border-slate-800 rounded-lg px-2.5 py-1 flex items-center gap-2 shadow-sm">
+                    <span class="tech-font text-[9px] text-slate-400">WIND:</span>
+                    <div class="relative w-4 h-4 flex items-center justify-center">
+                        <i id="wind-arrow" class="fa-solid fa-arrow-up text-indigo-400 transition-transform duration-500 text-xs"></i>
+                    </div>
+                    <span id="wind-strength-label" class="tech-font text-[9px] font-bold text-indigo-300">0 m/s</span>
+                </div>
+            </div>
+
+            <!-- P2 Status-Card (Neon Pink) -->
+            <div id="player2-card" class="cyber-panel neon-glow-p2 rounded-lg p-2.5 w-44 md:w-52 transition-all duration-300">
+                <div class="flex items-center justify-between mb-1.5">
+                    <span class="cyber-font text-[9px] font-bold text-rose-400 tracking-wider flex items-center gap-1">
+                        <span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span> SPIELER 2
+                    </span>
+                    <span id="p2-tanks-count" class="tech-font text-xs text-rose-300 font-bold">5/5 Panzer</span>
+                </div>
+                <div class="space-y-1" id="p2-tanks-list">
+                    <!-- Wird dynamisch befüllt -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Rundenwechsel-Banner (Große animierte Einblendung) -->
+        <div id="turn-banner" class="fixed inset-0 flex items-center justify-center pointer-events-none z-40 bg-black/20 opacity-0 transition-opacity duration-300">
+            <div id="turn-banner-content" class="cyber-panel py-4 px-12 border-y border-indigo-500/50 w-full text-center transform scale-90 transition-transform duration-300">
+                <h2 id="turn-banner-text" class="cyber-font text-xl md:text-3xl font-black tracking-widest text-indigo-400 drop-shadow-[0_0_8px_rgba(99,102,241,0.6)]">
+                    ZUG-WECHSEL
+                </h2>
+                <p class="tech-font text-[10px] text-slate-300 mt-1 tracking-wide uppercase">Wähle deinen Panzer...</p>
+            </div>
+        </div>
+
+        <!-- Mittleres Overlay für Hinweistexte -->
+        <div class="flex justify-center items-center h-full pointer-events-none">
+            <div id="announcement-text" class="tech-font text-center text-xs bg-slate-950/60 px-4 py-2 rounded-lg border border-indigo-500/20 text-indigo-300 opacity-0 transition-all duration-300 shadow-md max-w-xs">
+                Spieler 1 - Wähle einen Panzer!
+            </div>
+        </div>
+
+        <!-- Footer: Steuerung, Schussbalken und Aktions-Optionen -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 w-full items-end pointer-events-auto">
+            
+            <!-- Linke Steuerungsinfos (Kontextabhängig verkleinert) -->
+            <div class="cyber-panel rounded-lg p-2 shadow-md max-w-[260px] hidden md:block">
+                <div class="flex justify-between items-center mb-1">
+                    <h3 class="cyber-font text-[8px] font-bold text-indigo-400 tracking-wider">AKTUELLE STEUERUNG</h3>
+                    <!-- Ton-Optionen -->
+                    <div class="flex gap-1.5">
+                        <button id="btn-toggle-music" class="text-[9px] text-slate-400 hover:text-indigo-400 p-0.5" title="Musik an/aus">
+                            <i class="fa-solid fa-music"></i>
+                        </button>
+                        <button id="btn-toggle-sfx" class="text-[9px] text-slate-400 hover:text-indigo-400 p-0.5" title="Effekte an/aus">
+                            <i class="fa-solid fa-volume-high"></i>
+                        </button>
+                    </div>
+                </div>
+                <!-- Dynamischer Hilfe-Text je nach Phase -->
+                <div id="controls-help-text" class="space-y-0.5 text-[9px] text-slate-400 tech-font">
+                    <!-- Wird per JS befüllt -->
+                </div>
+            </div>
+
+            <!-- Mitte: Schusskraftanzeige & Schuss-Button -->
+            <div id="shooting-control-panel" class="flex flex-col items-center cyber-panel rounded-xl p-2.5 shadow-md max-w-xs mx-auto w-full opacity-50 transition-opacity duration-300">
+                <div class="flex justify-between w-full mb-0.5">
+                    <span class="cyber-font text-[8px] font-bold text-amber-400 tracking-wider">REAKTOR-LADEDRUCK</span>
+                    <span id="power-percentage" class="tech-font text-xs text-amber-400 font-bold">0%</span>
+                </div>
+                <!-- Power-Balken -->
+                <div class="w-full bg-slate-950/50 rounded-full h-3 overflow-hidden border border-slate-800 p-[1px]">
+                    <div id="power-bar" class="bg-gradient-to-r from-cyan-500 via-indigo-500 to-amber-500 h-full w-0 rounded-full transition-all duration-75 shadow-[0_0_8px_rgba(99,102,241,0.4)]"></div>
+                </div>
+                <!-- Manueller Trigger für Mobile/Touch-Support -->
+                <button id="shoot-button" disabled class="mt-2 w-full cyber-font text-[8px] font-bold bg-slate-800 text-slate-500 py-1.5 rounded-lg shadow-md tracking-wider border border-slate-700 cursor-not-allowed">
+                    ERST BEWEGUNG ABSCHLIESSEN
+                </button>
+            </div>
+
+            <!-- Rechte Aktionssteuerung -->
+            <div class="cyber-panel rounded-lg p-2.5 shadow-md text-right max-w-[260px] ml-auto w-full">
+                <h3 id="selected-tank-label" class="cyber-font text-xs font-bold text-indigo-400 mb-0.5 tracking-wider">Kein Panzer gewählt</h3>
+                <div class="tech-font text-[10px] text-slate-300 mb-2">
+                    HP: <span id="selected-tank-hp" class="font-bold text-slate-100">-</span> | 
+                    AP: <span id="selected-tank-ap" class="font-bold text-slate-100">-</span>
+                </div>
+                <div class="flex gap-1.5 justify-end">
+                    <!-- Phasenspezifischer Aktions-Button -->
+                    <button id="btn-phase-action" disabled class="bg-slate-800 text-slate-500 text-[10px] px-2 py-1.5 rounded-md font-bold cursor-not-allowed transition-colors border border-slate-700 tech-font">
+                        WEITER
+                    </button>
+                    <button id="btn-skip-turn" class="bg-slate-800/60 hover:bg-slate-700 text-[10px] px-2 py-1.5 rounded-md font-bold cursor-pointer transition-colors border border-slate-700 tech-font">
+                        PASSEN
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Over Screen Modal -->
+    <div id="game-over-modal" class="fixed inset-0 bg-black/95 flex flex-col items-center justify-center z-50 opacity-0 pointer-events-none transition-all duration-500">
+        <div class="cyber-panel border border-indigo-500/50 rounded-2xl p-6 max-w-xs w-full text-center shadow-2xl m-4">
+            <h1 class="cyber-font text-xl font-black text-amber-500 mb-1 animate-bounce tracking-widest">MISSION ERFÜLLT</h1>
+            <p id="winner-text" class="tech-font text-base mb-4">Spieler 1 dominiert das Schlachtfeld!</p>
+            <div class="tech-font text-[10px] text-slate-400 mb-6 leading-relaxed">
+                Alle feindlichen Voxel-Kräfte wurden neutralisiert.
+            </div>
+            <button onclick="location.reload()" class="cyber-font text-[10px] bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-lg cursor-pointer transform active:scale-95 transition-all tracking-wider border border-indigo-400/20">
+                NEUSTART
+            </button>
+        </div>
+    </div>
+
+    <!-- Intro / Hilfe Modal beim Start -->
+    <div id="intro-modal" class="fixed inset-0 bg-slate-950/98 flex flex-col items-center justify-center z-50 transition-all duration-500">
+        <div class="cyber-panel border border-indigo-500/50 rounded-2xl p-6 max-w-md w-full shadow-2xl mx-4">
+            <div class="flex flex-col items-center gap-2 mb-4">
+                <div class="h-12 w-12 bg-indigo-600/20 border border-indigo-500/30 rounded-xl flex items-center justify-center animate-pulse">
+                    <i class="fa-solid fa-atom text-indigo-400 text-xl"></i>
+                </div>
+                <h1 class="cyber-font text-base font-black text-slate-100 tracking-[0.2em] text-center">VOXEL PANZER 3D</h1>
+                <span class="tech-font text-[9px] text-indigo-400 font-bold tracking-widest uppercase">Space Tactical Combat - 3-Phasen Edition</span>
+            </div>
+            
+            <div class="space-y-2 text-[11px] text-slate-300 tech-font leading-relaxed">
+                <p class="border-b border-slate-800 pb-1 text-indigo-300 cyber-font text-[10px] font-bold tracking-wider">NEUE 3-PHASEN MECHANIK:</p>
+                <ul class="list-disc list-inside space-y-1">
+                    <li><strong class="text-amber-400">Phase 1 - Wählen:</strong> Klicke einen deiner Panzer an, um den Zug zu starten.</li>
+                    <li><strong class="text-cyan-400">Phase 2 - Fahren:</strong> Steuere den Panzer Voxel für Voxel mit <strong class="text-white">WASD / Pfeiltasten</strong> (max. 15 Schritte). Drücke <strong class="text-white">Leertaste</strong> zum Beenden.</li>
+                    <li><strong class="text-purple-400">Phase 3 - Zielen:</strong> Justiere Turm und Neigung mit <strong class="text-white">WASD</strong>. Halte die <strong class="text-white">Leertaste</strong> zum Aufladen des Schusses gedrückt.</li>
+                </ul>
+            </div>
+
+            <div class="mt-6 flex justify-center">
+                <button id="btn-start-game" class="cyber-font text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-8 rounded-lg shadow-lg cursor-pointer transform active:scale-95 transition-all tracking-widest border border-emerald-400/20">
+                    SYSTEM INITIATION
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modulares Game Script -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
