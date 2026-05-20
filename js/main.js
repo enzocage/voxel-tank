@@ -396,7 +396,7 @@ function setupUIEventListeners() {
     }
 }
 
-window.onload = function () {
+function startApp() {
     initThree();
     generateTerrain();
     buildTerrainMesh();
@@ -411,4 +411,10 @@ window.onload = function () {
     }
 
     animate();
+}
+
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    startApp();
+} else {
+    window.addEventListener('load', startApp);
 }
