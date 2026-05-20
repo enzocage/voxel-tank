@@ -316,68 +316,85 @@ function animate() {
 }
 
 window.addEventListener('resize', () => {
+    if (!state.camera || !state.renderer) return;
     state.camera.aspect = window.innerWidth / window.innerHeight;
     state.camera.updateProjectionMatrix();
     state.renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-document.getElementById('btn-phase-action').addEventListener('click', () => {
-    if (state.currentPhase === 'MOVE') {
-        playSound('click');
-        setPhase('AIM');
+function setupUIEventListeners() {
+    const btnPhaseAction = document.getElementById('btn-phase-action');
+    if (btnPhaseAction) {
+        btnPhaseAction.addEventListener('click', () => {
+            if (state.currentPhase === 'MOVE') {
+                playSound('click');
+                setPhase('AIM');
+            }
+        });
     }
-});
 
-document.getElementById('btn-skip-turn').addEventListener('click', () => {
-    playSound('click');
-    nextTurn();
-});
-
-document.getElementById('btn-toggle-sfx').addEventListener('click', (e) => {
-    audioState.isSfxEnabled = !audioState.isSfxEnabled;
-    const icon = e.currentTarget.querySelector('i');
-    if (audioState.isSfxEnabled) {
-        icon.className = "fa-solid fa-volume-high text-indigo-400";
-    } else {
-        icon.className = "fa-solid fa-volume-xmark text-slate-500";
+    const btnSkipTurn = document.getElementById('btn-skip-turn');
+    if (btnSkipTurn) {
+        btnSkipTurn.addEventListener('click', () => {
+            playSound('click');
+            nextTurn();
+        });
     }
-    playSound('click');
-});
 
-const playBtn = document.getElementById('btn-play-soundtrack');
-const volSlider = document.getElementById('slider-soundtrack-vol');
-if (playBtn && volSlider) {
-    playBtn.addEventListener('click', () => {
-        toggleSoundtrack();
-        const playIcon = playBtn.querySelector('i');
-        if (audioState.isSoundtrackPlaying) {
-            playIcon.className = "fa-solid fa-pause text-[8px]";
-            playBtn.classList.remove('animate-pulse');
-        } else {
-            playIcon.className = "fa-solid fa-play text-[8px]";
-            playBtn.classList.add('animate-pulse');
-        }
-        playSound('click');
-    });
+    const btnToggleSfx = document.getElementById('btn-toggle-sfx');
+    if (btnToggleSfx) {
+        btnToggleSfx.addEventListener('click', (e) => {
+            audioState.isSfxEnabled = !audioState.isSfxEnabled;
+            const icon = e.currentTarget.querySelector('i');
+            if (audioState.isSfxEnabled) {
+                icon.className = "fa-solid fa-volume-high text-indigo-400";
+            } else {
+                icon.className = "fa-solid fa-volume-xmark text-slate-500";
+            }
+            playSound('click');
+        });
+    }
 
-    volSlider.addEventListener('input', (e) => {
-        const val = parseFloat(e.target.value);
-        setSoundtrackVolume(val);
-    });
+    const playBtn = document.getElementById('btn-play-soundtrack');
+    const volSlider = document.getElementById('slider-soundtrack-vol');
+    if (playBtn && volSlider) {
+        playBtn.addEventListener('click', () => {
+            toggleSoundtrack();
+            const playIcon = playBtn.querySelector('i');
+            if (audioState.isSoundtrackPlaying) {
+                playIcon.className = "fa-solid fa-pause text-[8px]";
+                playBtn.classList.remove('animate-pulse');
+            } else {
+                playIcon.className = "fa-solid fa-play text-[8px]";
+                playBtn.classList.add('animate-pulse');
+            }
+            playSound('click');
+        });
+
+        volSlider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            setSoundtrackVolume(val);
+        });
+    }
+
+    const btnStartGame = document.getElementById('btn-start-game');
+    if (btnStartGame) {
+        btnStartGame.addEventListener('click', () => {
+            playSound('click');
+            const intro = document.getElementById('intro-modal');
+            if (intro) {
+                intro.classList.add('opacity-0', 'pointer-events-none');
+            }
+            
+            toggleSoundtrack();
+            if (playBtn) {
+                const playIcon = playBtn.querySelector('i');
+                if (playIcon) playIcon.className = "fa-solid fa-pause text-[8px]";
+                playBtn.classList.remove('animate-pulse');
+            }
+        });
+    }
 }
-
-document.getElementById('btn-start-game').addEventListener('click', () => {
-    playSound('click');
-    const intro = document.getElementById('intro-modal');
-    intro.classList.add('opacity-0', 'pointer-events-none');
-    
-    toggleSoundtrack();
-    if (playBtn) {
-        const playIcon = playBtn.querySelector('i');
-        if (playIcon) playIcon.className = "fa-solid fa-pause text-[8px]";
-        playBtn.classList.remove('animate-pulse');
-    }
-});
 
 window.onload = function () {
     initThree();
@@ -386,6 +403,7 @@ window.onload = function () {
     spawnTanks();
     setupInput();
     updateWindUI();
+    setupUIEventListeners();
     
     if (tanks.length > 0) {
         selectTank(tanks[0]);
