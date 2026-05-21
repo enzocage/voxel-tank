@@ -56,8 +56,8 @@ No server-side game logic runs anywhere. All physics, collision, and damage calc
 - **5 named tanks per player** with individual HP tracking and death animations
 
 ### Tactical Shot Modes
-- **SUB** (Destructive) — explosive radius removes voxel blocks and deals up to 65 HP damage to nearby tanks
-- **ADD** (Constructive) — builds a crystal hill; use it to wall in enemies, create ramps, or bridge craters
+- **DESTROY** (Destructive) — explosive radius removes voxel blocks and deals up to 65 HP damage to nearby tanks
+- **VOXEL** (Constructive) — builds a crystal hill; use it to wall in enemies, create ramps, or bridge craters
 - **WALL** — spawns a 10×5 voxel barrier perpendicular to the firing direction; max 3 active walls per player
 - **S.H.I.E.L.D.** — deploys a giant energy dome for 5 rounds; blocks all inbound projectiles, lets outbound shots pass freely; **once per game**
 
@@ -65,7 +65,7 @@ No server-side game logic runs anywhere. All physics, collision, and damage calc
 - **ACESFilmic tone mapping** — physically-based highlight rolloff, no blown-out whites
 - **UnrealBloom post-processing** — emissive glow only on shields, particles, and trails; terrain stays clean
 - **Procedural nebula skybox** — layered star fields with colored nebula clouds, generated at startup
-- **Animated voxel construction** — ADD and WALL blocks materialize sequentially with scale/bounce animation
+- **Animated voxel construction** — VOXEL and WALL blocks materialize sequentially with scale/bounce animation
 - **Chromatic aberration** on shot impact
 - **Procedural synthesizer audio** — all music and SFX generated via the Web Audio API at runtime; zero external audio assets
 - **Dynamic light flicker** during S.H.I.E.L.D. deployment affects scene-wide ambient and directional lighting
@@ -134,17 +134,17 @@ Each step costs **1 AP**. When AP hits 0, movement ends automatically.
 The glowing trajectory arc updates in real time as you adjust aim. Wind is shown in the HUD — account for it on long shots.
 
 ### Shot Mode Selection
-Cycle through **SUB / ADD / WALL / S.H.I.E.L.D.** using the pulsing mode button in the bottom bar before firing.
+Cycle through **DESTROY / VOXEL / WALL / S.H.I.E.L.D.** using the pulsing mode button in the bottom bar before firing.
 
 ---
 
 ## Tactical Guide
 
-### Terrain Destruction (SUB)
-Direct impacts are satisfying, but the real power is **indirect fire**. Shoot the blocks *beneath* an enemy tank — the unit drops, takes fall damage, and loses its elevated firing position. A well-placed SUB shot can simultaneously expose an enemy and create a crater that limits their next movement.
+### Terrain Destruction (DESTROY)
+Direct impacts are satisfying, but the real power is **indirect fire**. Shoot the blocks *beneath* an enemy tank — the unit drops, takes fall damage, and loses its elevated firing position. A well-placed DESTROY shot can simultaneously expose an enemy and create a crater that limits their next movement.
 
-### Terrain Construction (ADD)
-ADD shots build terrain. Firing at an enemy's feet can **entomb** them — surrounding voxels restrict movement and block firing angles. ADD can also build **ramps** to reach higher ground, which grants longer effective range due to barrel elevation.
+### Terrain Construction (VOXEL)
+VOXEL shots build terrain. Firing at an enemy's feet can **entomb** them — surrounding voxels restrict movement and block firing angles. VOXEL can also build **ramps** to reach higher ground, which grants longer effective range due to barrel elevation.
 
 ### WALL Placement
 The WALL orients perpendicular to your firing direction — aim carefully to control which direction the wall runs. A well-placed wall seals a valley passage entirely, forcing enemies to climb exposed high ground. WALL blocks have **70% explosion resistance**, making them significantly harder to clear than natural terrain.
