@@ -1,11 +1,11 @@
 // Main Three.js setup, environment generation, and game loop
-import { GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, BLOCK_SIZE } from './constants.js?v=4';
-import { state, tanks, projectiles, particles } from './state.js?v=4';
-import { generateTerrain, buildTerrainMesh, getBlock } from './terrain.js?v=4';
-import { audioState, playSound, soundtrack, toggleSoundtrack, setSoundtrackVolume } from './audio.js?v=4';
-import { spawnTanks } from './tank.js?v=4';
-import { setupInput, startCharging, fireProjectile } from './input.js?v=4';
-import { updateWindUI, setPhase, selectTank, nextTurn, updateUI, highlightPossibleMoves } from './ui.js?v=4';
+import { GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, BLOCK_SIZE } from './constants.js?v=5';
+import { state, tanks, projectiles, particles } from './state.js?v=5';
+import { generateTerrain, buildTerrainMesh, getBlock } from './terrain.js?v=5';
+import { audioState, playSound, soundtrack, toggleSoundtrack, setSoundtrackVolume } from './audio.js?v=5';
+import { spawnTanks } from './tank.js?v=5';
+import { setupInput, startCharging, fireProjectile } from './input.js?v=5';
+import { updateWindUI, setPhase, selectTank, nextTurn, updateUI, highlightPossibleMoves } from './ui.js?v=5';
 
 let clock = new THREE.Clock();
 
