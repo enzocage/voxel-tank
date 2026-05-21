@@ -2,7 +2,7 @@
 
 > **A browser-based 3D voxel tactics game** with destructible terrain, real-time online multiplayer, and a fully procedural synthesizer soundtrack. No installation, no downloads — runs entirely in the browser.
 
-**Live Demo:** [https://voxel-panzer.web.app](https://voxel-panzer.web.app)
+**[▶ Play now — https://voxel-panzer.web.app](https://voxel-panzer.web.app/)**
 
 ---
 
