@@ -289,7 +289,7 @@ export function updateUI() {
         shootPanel.classList.remove('opacity-50');
         shootBtn.disabled = false;
         shootBtn.innerText = "FEUERKNOPF HALTEN (LEERTASTE)";
-        shootBtn.className = "flex-1 cyber-font text-[8px] font-bold bg-gradient-to-r from-red-600/80 to-indigo-600/80 hover:from-red-500 hover:to-indigo-500 active:scale-95 text-white py-1.5 rounded-lg shadow-md transition-all cursor-pointer tracking-wider border border-red-400/20";
+        shootBtn.className = "flex-1 cyber-font text-[8px] font-bold bg-gradient-to-r from-red-600/80 to-indigo-600/80 hover:from-red-500 hover:to-indigo-500 text-white py-1.5 rounded-lg shadow-md cursor-pointer tracking-wider border border-red-400/20 shoot-btn-active";
 
         phaseActionBtn.disabled = true;
         phaseActionBtn.innerText = "FEUERN!";
