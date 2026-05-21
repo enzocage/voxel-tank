@@ -1,11 +1,11 @@
 // Main Three.js setup, environment generation, and game loop
-import { GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, BLOCK_SIZE } from './constants.js?v=14';
-import { state, tanks, projectiles, particles } from './state.js?v=14';
-import { generateTerrain, buildTerrainMesh, getBlock } from './terrain.js?v=14';
-import { audioState, playSound, soundtrack, toggleSoundtrack, setSoundtrackVolume } from './audio.js?v=14';
-import { spawnTanks } from './tank.js?v=14';
-import { setupInput, startCharging, fireProjectile } from './input.js?v=14';
-import { updateWindUI, setPhase, selectTank, nextTurn, updateUI, highlightPossibleMoves } from './ui.js?v=14';
+import { GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, BLOCK_SIZE } from './constants.js?v=15';
+import { state, tanks, projectiles, particles } from './state.js?v=15';
+import { generateTerrain, buildTerrainMesh, getBlock } from './terrain.js?v=15';
+import { audioState, playSound, soundtrack, toggleSoundtrack, setSoundtrackVolume } from './audio.js?v=15';
+import { spawnTanks } from './tank.js?v=15';
+import { setupInput, startCharging, fireProjectile } from './input.js?v=15';
+import { updateWindUI, setPhase, selectTank, nextTurn, updateUI, highlightPossibleMoves } from './ui.js?v=15';
 
 let clock = new THREE.Clock();
 
@@ -87,6 +87,7 @@ function initThree() {
         blending: THREE.AdditiveBlending
     });
     state.trajectoryMesh = new THREE.Points(trajGeom, trajMat);
+    state.trajectoryMesh.frustumCulled = false;
     state.scene.add(state.trajectoryMesh);
 
     createStarfield();
@@ -240,6 +241,8 @@ function updateTrajectoryPreview() {
     }
 
     state.trajectoryMesh.geometry.setFromPoints(points);
+    state.trajectoryMesh.geometry.computeBoundingBox();
+    state.trajectoryMesh.geometry.computeBoundingSphere();
 }
 
 function handleTankAiming(dt) {
