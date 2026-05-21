@@ -1,8 +1,8 @@
 // UI layouts, banner displays, updates, wind direction display, victory check, and selections
-import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js?v=15';
-import { state, tanks, movementHighlights } from './state.js?v=15';
-import { getSurfaceY } from './terrain.js?v=15';
-import { playSound } from './audio.js?v=15';
+import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js?v=16';
+import { state, tanks, movementHighlights } from './state.js?v=16';
+import { getSurfaceY } from './terrain.js?v=16';
+import { playSound } from './audio.js?v=16';
 
 export function showAnnouncement(text) {
     const container = document.getElementById('announcement-text');
@@ -407,7 +407,7 @@ export function showDamagePopup(amount, tankMesh, colorHex) {
 
 // deployShield instantiates a transparent shimmering dome over terrain, blocking bullets from hitting tanks inside
 export function deployShield(ex, ey, ez, playerId) {
-    playSound('charge');
+    playSound('shield_deploy');
     state.screenShakeIntensity = 0.6;
     
     // Player colors: Player 1 = 0x10b981 (emerald green), Player 2 = 0xf43f5e (rose red)
@@ -430,12 +430,19 @@ export function deployShield(ex, ey, ez, playerId) {
     });
     const shieldMesh = new THREE.Mesh(shieldGeom, shieldMat);
     shieldMesh.position.set(ex, ey, ez);
+    shieldMesh.scale.set(0.01, 0.01, 0.01);
     state.scene.add(shieldMesh);
 
     // Create floating text sprite for turnsLeft
     const sprite = createNumberSprite(10, shieldColorHex);
     sprite.position.set(ex, ey + 11.5, ez);
+    sprite.scale.set(0.01, 0.01, 1);
     state.scene.add(sprite);
+
+    // PointLight representing the energy source of the shield
+    const pLight = new THREE.PointLight(shieldColor, 6.0, 30);
+    pLight.position.set(ex, ey, ez);
+    state.scene.add(pLight);
 
     const shieldObj = {
         owner: playerId,
@@ -443,7 +450,11 @@ export function deployShield(ex, ey, ez, playerId) {
         radius: 10,
         turnsLeft: 10,
         mesh: shieldMesh,
-        textSprite: sprite
+        textSprite: sprite,
+        pointLight: pLight,
+        animating: true,
+        animStartTime: performance.now(),
+        animDuration: 1500
     };
 
     if (!state.activeShields) state.activeShields = [];
@@ -505,6 +516,9 @@ export function tickActiveShields(newActivePlayer) {
             if (shield.turnsLeft <= 0) {
                 state.scene.remove(shield.mesh);
                 state.scene.remove(shield.textSprite);
+                if (shield.pointLight) {
+                    state.scene.remove(shield.pointLight);
+                }
                 state.activeShields.splice(i, 1);
                 playSound('explosion');
                 showAnnouncement(`Kuppel von Spieler ${shield.owner} ist erloschen!`);

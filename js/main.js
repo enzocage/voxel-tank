@@ -1,11 +1,11 @@
 // Main Three.js setup, environment generation, and game loop
-import { GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, BLOCK_SIZE } from './constants.js?v=15';
-import { state, tanks, projectiles, particles } from './state.js?v=15';
-import { generateTerrain, buildTerrainMesh, getBlock } from './terrain.js?v=15';
-import { audioState, playSound, soundtrack, toggleSoundtrack, setSoundtrackVolume } from './audio.js?v=15';
-import { spawnTanks } from './tank.js?v=15';
-import { setupInput, startCharging, fireProjectile } from './input.js?v=15';
-import { updateWindUI, setPhase, selectTank, nextTurn, updateUI, highlightPossibleMoves } from './ui.js?v=15';
+import { GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, BLOCK_SIZE } from './constants.js?v=16';
+import { state, tanks, projectiles, particles } from './state.js?v=16';
+import { generateTerrain, buildTerrainMesh, getBlock } from './terrain.js?v=16';
+import { audioState, playSound, soundtrack, toggleSoundtrack, setSoundtrackVolume } from './audio.js?v=16';
+import { spawnTanks } from './tank.js?v=16';
+import { setupInput, startCharging, fireProjectile } from './input.js?v=16';
+import { updateWindUI, setPhase, selectTank, nextTurn, updateUI, highlightPossibleMoves } from './ui.js?v=16';
 
 let clock = new THREE.Clock();
 
@@ -152,6 +152,12 @@ function updateTrajectoryPreview() {
 
     const activeProj = projectiles.length > 0 ? projectiles[0] : null;
     const mode = activeProj ? activeProj.mode : state.shotMode;
+    
+    if (mode === 'shield') {
+        state.trajectoryMesh.geometry.setFromPoints([]);
+        return;
+    }
+    
     const shooter = activeProj ? activeProj.shooter : state.selectedTank;
     const pId = shooter ? shooter.player : state.activePlayer;
 
@@ -335,11 +341,79 @@ function animate() {
     if (state.activeShields) {
         state.activeShields.forEach(shield => {
             const time = performance.now();
-            if (shield.mesh && shield.mesh.material) {
-                shield.mesh.material.opacity = 0.2 + 0.08 * Math.sin(time * 0.003);
-                const scaleScalar = 1 + 0.02 * Math.sin(time * 0.002);
-                shield.mesh.scale.set(scaleScalar, scaleScalar, scaleScalar);
+            if (shield.animating) {
+                const elapsed = time - shield.animStartTime;
+                const progress = Math.min(1.0, elapsed / shield.animDuration);
+                
+                // Scale up from 0.01 to 1.0
+                const baseScale = 0.01 + progress * 0.99;
+                
+                // High frequency vibration/oscillation (50 rad/s)
+                const oscillation = Math.sin(time * 0.05) * 0.08 * (1.0 - progress + 0.25);
+                const scaleScalar = Math.max(0.01, baseScale + oscillation);
+                
+                if (shield.mesh) {
+                    shield.mesh.scale.set(scaleScalar, scaleScalar, scaleScalar);
+                    
+                    // Opacity oscillations & brightness fluctuations of the dome itself
+                    shield.mesh.material.opacity = Math.max(0.05, Math.min(0.6, 0.1 + 0.25 * Math.sin(time * 0.04) + (Math.random() - 0.5) * 0.05));
+                }
+                
+                // Dynamic PointLight intensity and distance fluctuations
+                if (shield.pointLight) {
+                    const lightFlicker = Math.sin(time * 0.08) * 3.0 + (Math.random() - 0.5) * 2.0;
+                    shield.pointLight.intensity = Math.max(0.5, 6.0 * (1.0 - progress) + 2.0 + lightFlicker);
+                    shield.pointLight.distance = 25 + 15 * Math.sin(time * 0.02);
+                }
+                
+                // Global brightness fluctuations (modulating ambient and directional lights)
+                const ambientLight = state.scene.children.find(c => c.isAmbientLight);
+                const dirLight = state.scene.children.find(c => c.isDirectionalLight);
+                const globalFlicker = Math.sin(time * 0.05) * 0.25 + (Math.random() - 0.5) * 0.15;
+                
+                if (ambientLight) {
+                    ambientLight.intensity = Math.max(0.1, 0.35 + globalFlicker * 1.2);
+                }
+                if (dirLight) {
+                    dirLight.intensity = Math.max(0.2, 1.2 + globalFlicker * 2.5);
+                }
+                
+                // Scale up floating turns text sprite with the shield
+                if (shield.textSprite) {
+                    shield.textSprite.scale.set(progress * 4, progress * 4, 1);
+                }
+                
+                if (progress >= 1.0) {
+                    shield.animating = false;
+                    if (shield.mesh) {
+                        shield.mesh.scale.set(1, 1, 1);
+                        shield.mesh.material.opacity = 0.25;
+                    }
+                    if (shield.textSprite) {
+                        shield.textSprite.scale.set(4, 4, 1);
+                    }
+                    // Reset global lights to defaults
+                    const ambientLight = state.scene.children.find(c => c.isAmbientLight);
+                    const dirLight = state.scene.children.find(c => c.isDirectionalLight);
+                    if (ambientLight) ambientLight.intensity = 0.35;
+                    if (dirLight) dirLight.intensity = 1.2;
+                }
+            } else {
+                // Normal idle breathing/pulsating animation
+                if (shield.mesh && shield.mesh.material) {
+                    shield.mesh.material.opacity = 0.2 + 0.08 * Math.sin(time * 0.003);
+                    const scaleScalar = 1 + 0.02 * Math.sin(time * 0.002);
+                    shield.mesh.scale.set(scaleScalar, scaleScalar, scaleScalar);
+                }
+                if (shield.pointLight) {
+                    shield.pointLight.intensity = 1.0 + 0.3 * Math.sin(time * 0.002);
+                    shield.pointLight.distance = 20;
+                }
+                if (shield.textSprite) {
+                    shield.textSprite.scale.set(4, 4, 1);
+                }
             }
+            
             if (shield.textSprite) {
                 shield.textSprite.quaternion.copy(state.camera.quaternion);
             }

@@ -1,17 +1,19 @@
 // Keyboard, Mouse, and Touch input handling
-import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js?v=15';
-import { state, tanks, projectiles } from './state.js?v=15';
-import { getSurfaceY } from './terrain.js?v=15';
-import { playSound } from './audio.js?v=15';
-import { Projectile } from './projectile.js?v=15';
+import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js?v=16';
+import { state, tanks, projectiles } from './state.js?v=16';
+import { getSurfaceY } from './terrain.js?v=16';
+import { playSound } from './audio.js?v=16';
+import { Projectile } from './projectile.js?v=16';
 import { 
     setPhase, 
     selectTank, 
     updateUI, 
     highlightPossibleMoves, 
     clearHighlights,
-    adjustCameraFocusOnTank
-} from './ui.js?v=15';
+    adjustCameraFocusOnTank,
+    deployShield,
+    nextTurn
+} from './ui.js?v=16';
 
 export function attemptStep(dx, dz) {
     if (!state.selectedTank || state.actionsRemaining <= 0) return;
@@ -55,6 +57,26 @@ export function startCharging() {
 
 export function fireProjectile() {
     state.isCharging = false;
+    
+    if (state.shotMode === 'shield') {
+        const ex = state.selectedTank.mesh.position.x;
+        const ey = state.selectedTank.mesh.position.y;
+        const ez = state.selectedTank.mesh.position.z;
+        
+        deployShield(ex, ey, ez, state.activePlayer);
+        
+        document.getElementById('power-bar').style.width = '0%';
+        document.getElementById('power-percentage').innerText = '0%';
+        state.trajectoryMesh.geometry.setFromPoints([]);
+        
+        clearHighlights();
+        updateUI();
+        
+        setTimeout(() => {
+            nextTurn();
+        }, 1600);
+        return;
+    }
     
     const yaw = state.selectedTank.bodyYaw + state.selectedTank.turretYaw;
     const pitch = state.selectedTank.barrelPitch;

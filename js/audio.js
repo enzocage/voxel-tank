@@ -110,6 +110,50 @@ export function playSound(type, extra = {}) {
             osc.start(now);
             osc.stop(now + 0.08);
         }
+        else if (type === 'shield_deploy') {
+            const osc1 = audioCtx.createOscillator();
+            const osc2 = audioCtx.createOscillator();
+            const lfo = audioCtx.createOscillator();
+            const lfoGain = audioCtx.createGain();
+            const gain = audioCtx.createGain();
+            
+            osc1.type = 'sine';
+            osc1.frequency.setValueAtTime(60, now);
+            osc1.frequency.exponentialRampToValueAtTime(880, now + 1.5);
+            
+            osc2.type = 'sawtooth';
+            osc2.frequency.setValueAtTime(40, now);
+            osc2.frequency.exponentialRampToValueAtTime(220, now + 1.5);
+            
+            lfo.type = 'sine';
+            lfo.frequency.setValueAtTime(25, now);
+            lfoGain.gain.setValueAtTime(15, now);
+            
+            gain.gain.setValueAtTime(0.01, now);
+            gain.gain.linearRampToValueAtTime(0.3, now + 0.3);
+            gain.gain.setValueAtTime(0.3, now + 0.3);
+            
+            for (let t = 0.3; t < 1.3; t += 0.1) {
+                gain.gain.linearRampToValueAtTime(0.2 + Math.random() * 0.15, now + t);
+            }
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+            
+            lfo.connect(lfoGain);
+            lfoGain.connect(osc1.frequency);
+            lfoGain.connect(osc2.frequency);
+            
+            osc1.connect(gain);
+            osc2.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            lfo.start(now);
+            osc1.start(now);
+            osc2.start(now);
+            
+            lfo.stop(now + 1.5);
+            osc1.stop(now + 1.5);
+            osc2.stop(now + 1.5);
+        }
     } catch (e) {
         console.warn("Audio-Fehler:", e);
     }
