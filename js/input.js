@@ -1,9 +1,9 @@
 // Keyboard, Mouse, and Touch input handling
-import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js?v=22';
-import { state, tanks, projectiles } from './state.js?v=22';
-import { getSurfaceY } from './terrain.js?v=22';
-import { playSound, startEngineHum, stopEngineHum } from './audio.js?v=22';
-import { Projectile } from './projectile.js?v=22';
+import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js?v=23';
+import { state, tanks, projectiles } from './state.js?v=23';
+import { getSurfaceY } from './terrain.js?v=23';
+import { playSound, startEngineHum, stopEngineHum } from './audio.js?v=23';
+import { Projectile } from './projectile.js?v=23';
 import {
     setPhase,
     selectTank,
@@ -13,8 +13,8 @@ import {
     adjustCameraFocusOnTank,
     deployShield,
     nextTurn
-} from './ui.js?v=22';
-import { syncActiveTankState, syncActionsRemaining, syncShotLaunch } from './multiplayer.js?v=22';
+} from './ui.js?v=23';
+import { syncActiveTankState, syncActionsRemaining, syncShotLaunch } from './multiplayer.js?v=23';
 
 function isLocalTurn() {
     if (state.isMultiplayer) return state.activePlayer === state.localPlayerRole;
@@ -87,7 +87,7 @@ export function fireProjectile() {
         setTimeout(() => {
             if (state.isMultiplayer) {
                 const nextRole = (state.localPlayerRole === 1) ? 2 : 1;
-                import('./multiplayer.js?v=22').then(mp => { mp.syncNextTurn(nextRole); });
+                import('./multiplayer.js?v=23').then(mp => { mp.syncNextTurn(nextRole); });
             } else {
                 nextTurn();
             }

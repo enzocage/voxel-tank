@@ -1,6 +1,6 @@
 // Firebase Authentication and User Statistics Module
-import { auth, db } from './firebase-config.js?v=22';
-import { state } from './state.js?v=22';
+import { auth, db } from './firebase-config.js?v=23';
+import { state } from './state.js?v=23';
 import { 
     signInAnonymously, 
     signInWithEmailAndPassword, 

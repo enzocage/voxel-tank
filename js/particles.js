@@ -1,5 +1,5 @@
 // Particle systems and transient visual effects
-import { state, particles, effects } from './state.js?v=22';
+import { state, particles, effects } from './state.js?v=23';
 
 export class Particle {
     constructor(x, y, z, color, size, velocity, life) {

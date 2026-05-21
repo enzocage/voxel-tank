@@ -24,6 +24,7 @@ export const state = {
     // Multiplayer State
     isMultiplayer: false,
     localPlayerRole: null,
+    playerRoleState: 'active', // 'active' or 'passive'
     lobbyId: null,
     opponentName: "",
     multiplayerStatus: "offline",

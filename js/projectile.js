@@ -1,12 +1,12 @@
 // Projectile logic, movement, and terrain destruction
-import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, PALETTE } from './constants.js?v=22';
-import { state, projectiles, tanks } from './state.js?v=22';
-import { getBlock, setBlock, buildTerrainMesh, getSurfaceY } from './terrain.js?v=22';
-import { playSound } from './audio.js?v=22';
-import { spawnExplosion, spawnDebrisParticle, spawnTrailParticle, spawnShockwave, spawnFireball } from './particles.js?v=22';
-import { applyGravityToTanks } from './tank.js?v=22';
-import { nextTurn, showAnnouncement, deployShield } from './ui.js?v=22';
-import { syncBlockChanges } from './multiplayer.js?v=22';
+import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, PALETTE } from './constants.js?v=23';
+import { state, projectiles, tanks } from './state.js?v=23';
+import { getBlock, setBlock, buildTerrainMesh, getSurfaceY } from './terrain.js?v=23';
+import { playSound } from './audio.js?v=23';
+import { spawnExplosion, spawnDebrisParticle, spawnTrailParticle, spawnShockwave, spawnFireball } from './particles.js?v=23';
+import { applyGravityToTanks } from './tank.js?v=23';
+import { nextTurn, showAnnouncement, deployShield } from './ui.js?v=23';
+import { syncBlockChanges } from './multiplayer.js?v=23';
 
 export class Projectile {
     constructor(startX, startY, startZ, velocity, shooterTankOrMode, optionalTank = null) {
@@ -123,6 +123,7 @@ export class Projectile {
     }
 
     destroy() {
+        console.log('[CAM] Projectile.destroy | isRemote:', this.isRemoteSimulation, '| cameraTransitioning before:', state.cameraTransitioning);
         state.scene.remove(this.mesh);
         state.cameraLerpTarget = null;
         const idx = projectiles.indexOf(this);
@@ -134,7 +135,7 @@ export class Projectile {
             applyGravityToTanks();
             if (state.isMultiplayer) {
                 const nextRole = (state.localPlayerRole === 1) ? 2 : 1;
-                import('./multiplayer.js?v=22').then(mp => { mp.syncNextTurn(nextRole); });
+                import('./multiplayer.js?v=23').then(mp => { mp.syncNextTurn(nextRole); }).catch(err => console.error('[CAM] syncNextTurn failed:', err));
             } else {
                 nextTurn();
             }
