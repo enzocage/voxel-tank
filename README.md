@@ -1,4 +1,8 @@
-# Voxel Panzer 3D — Space Tactical Combat
+# Voxel Tank — Space Tactical Combat
+
+<p align="center">
+  <img src="pics/start.jpg" alt="Voxel Tank – Start Screen" width="100%"/>
+</p>
 
 > **A browser-based 3D voxel tactics game** with destructible terrain, real-time online multiplayer, and a fully procedural synthesizer soundtrack. No installation, no downloads — runs entirely in the browser.
 
@@ -31,7 +35,7 @@
 
 ## Overview
 
-Voxel Panzer 3D is a turn-based tactical combat game rendered entirely in the browser via WebGL (Three.js). Two players command squads of **5 tanks each** on a fully destructible voxel battlefield. Every turn is divided into three phases — select, move, shoot — and every shot permanently reshapes the terrain.
+Voxel Tank is a turn-based tactical combat game rendered entirely in the browser via WebGL (Three.js). Two players command squads of **5 tanks each** on a fully destructible voxel battlefield. Every turn is divided into three phases — select, move, shoot — and every shot permanently reshapes the terrain.
 
 The game ships with two modes:
 - **Local Hotseat** — two players share one browser tab
@@ -65,23 +69,45 @@ No server-side game logic runs anywhere. All physics, collision, and damage calc
 - **Chromatic aberration** on shot impact
 - **Procedural synthesizer audio** — all music and SFX generated via the Web Audio API at runtime; zero external audio assets
 - **Dynamic light flicker** during S.H.I.E.L.D. deployment affects scene-wide ambient and directional lighting
-- **Camera lock-on** — viewport tracks fired projectiles for cinematic impact views
+- **Impact follow-cam** — viewport smoothly lerps to the projectile impact point for a cinematic close-up on every shot
+- **Screen shake** — S.H.I.E.L.D. deployment triggers a decaying camera shake (intensity 0.6, exponential decay)
+- **Victory cinematic** — after the final kill the camera orbits the winning tank while its turret spins; normal gameplay is suspended until the screen clears
+- **S.H.I.E.L.D. turn counter sprite** — a floating number above the dome shows exactly how many turns remain, updated each turn and removed on expiry
 
-### Multiplayer
+### Online Multiplayer
 - **Lobby system** with 4-character shareable codes (e.g. `AB7X`)
+- **Firebase Authentication** — play instantly as a guest, or register with email/password for persistent win/loss history
 - **Real-time state sync** — tank position, turret aim, shot launches, block changes, and turn transitions via Firebase Realtime Database
-- **Authoritative shooter model** — the active player computes physics and pushes definitive block/damage results; opponent simulates flight locally for visual fidelity
+- **Authoritative shooter model** — the active player computes physics and pushes definitive block/damage results; opponent's projectile is simulated locally for smooth visuals, then overwritten by the authoritative result
+- **Passive spectator camera** — while the opponent takes their turn, your camera automatically shifts to a tactical drone-angle overview of the battlefield
+- **Player name headers** — both players' display names appear in the squad sidebars throughout the match
+- **Skip / End Turn button** — a UI button (and `Space` during movement) lets you voluntarily end your turn early; the transition is broadcast to the opponent via Firebase
+- **Redundant turn-sync listener** — a secondary Firebase listener on `nextTurnTrigger` acts as a fallback to guarantee turn advancement even if the primary state listener is delayed
 - **Graceful disconnect** — opponent leaving triggers automatic win declaration and match recording
-- **Firebase Authentication** — anonymous or persistent login with win/loss history
+- **Top 10 Leaderboard** — live ranking of registered pilots by wins, shown on the start screen after login
 
 ---
 
 ## How to Play
 
-### Starting a Game
-1. Open [voxel-panzer.web.app](https://voxel-panzer.web.app)
-2. Click **SYSTEM INITIATION (LOKAL)** for local hotseat, or use **ONLINE MULTIPLAYER** to create/join a lobby
-3. The synthwave soundtrack starts and the voxel battlefield generates from a random seed
+### Start Screen
+
+The start screen shows three pulsing buttons over the game background:
+
+| Button | Action |
+|--------|--------|
+| **LOKAL** | Start a local hotseat game immediately |
+| **HELP** | Show controls and shot mode reference inline |
+| **ONLINE** | Open the online multiplayer panel |
+
+### Starting an Online Game
+
+1. Click **ONLINE** on the start screen
+2. Enter a display name and click **ALS GAST SPIELEN** (play as guest) — or register with email for a persistent profile
+3. Once logged in, either:
+   - **LOBBY ERSTELLEN** — creates a lobby and shows a 4-character code to share
+   - Enter a friend's code and click **BEITRETEN** to join
+4. When both players are in the lobby the game starts automatically
 
 ### Turn Loop
 
@@ -108,7 +134,7 @@ Each step costs **1 AP**. When AP hits 0, movement ends automatically.
 The glowing trajectory arc updates in real time as you adjust aim. Wind is shown in the HUD — account for it on long shots.
 
 ### Shot Mode Selection
-Cycle through **SUB / ADD / WALL / S.H.I.E.L.D.** using the mode buttons in the bottom bar before firing.
+Cycle through **SUB / ADD / WALL / S.H.I.E.L.D.** using the pulsing mode button in the bottom bar before firing.
 
 ---
 
@@ -132,14 +158,14 @@ The dome lasts exactly **5 rounds** and can only be used **once per game**. Don'
 
 | Layer | Technology |
 |---|---|
-| 3D Rendering | [Three.js](https://threejs.org/) r168 (WebGL) |
+| 3D Rendering | [Three.js](https://threejs.org/) r128 (WebGL) |
 | Post-Processing | Three.js EffectComposer, UnrealBloomPass, ShaderPass |
 | Camera | OrbitControls (360° battlefield inspection) |
 | UI / Styling | Tailwind CSS, FontAwesome |
 | Architecture | Vanilla JS — ES Modules (no bundler) |
 | Audio | Web Audio API (fully procedural) |
 | Backend / Multiplayer | Firebase Realtime Database |
-| Authentication | Firebase Auth (anonymous + persistent) |
+| Authentication | Firebase Auth (anonymous guest + email/password) |
 | Hosting | Firebase Hosting |
 
 ---
@@ -149,11 +175,14 @@ The dome lasts exactly **5 rounds** and can only be used **once per game**. Don'
 ```
 ├── index.html              # App shell, Tailwind, Three.js CDN imports
 ├── css/
-│   └── style.css           # Cyberpunk neon panel styling
-├── pics/                   # Screenshots
+│   └── style.css           # Cyberpunk neon panel styling, button animations
+├── pics/
+│   ├── start.jpg           # Start screen hero image
 │   ├── ss1.png
 │   ├── ss2.png
 │   └── ss3.png
+├── package.json            # npm start → npx serve .
+├── start.bat               # Windows: double-click to launch local server
 └── js/
     ├── constants.js        # Grid dimensions, block size, voxel color palette
     ├── state.js            # Centralized game state (tanks, phase, multiplayer)
@@ -180,10 +209,14 @@ git clone https://github.com/enzocage/voxel-tank.git
 cd voxel-tank
 
 # Serve (ES Modules require a real HTTP server, not file://)
+npm start
+# or
 npx serve .
 # or
 python -m http.server 8080
 ```
+
+> **Windows users:** double-click `start.bat` — it auto-detects Python or Node and opens the browser.
 
 Open `http://localhost:3000` (or `8080`). No build step required.
 
@@ -192,8 +225,8 @@ Open `http://localhost:3000` (or `8080`). No build step required.
 ## Firebase Setup (for Multiplayer)
 
 1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
-2. Enable **Realtime Database** and **Authentication** (Anonymous provider)
-3. Replace the config object in `js/firebase-config.js` with your project's credentials
+2. Enable **Realtime Database** and **Authentication** (Anonymous + Email/Password providers)
+3. Replace the config object in `index.html` (`window.FIREBASE_CONFIG`) with your project's credentials
 4. Deploy Realtime Database rules:
 ```json
 {
@@ -207,7 +240,7 @@ Open `http://localhost:3000` (or `8080`). No build step required.
   }
 }
 ```
-5. Deploy hosting: `npx firebase deploy --only hosting`
+5. Deploy hosting: `npx firebase-tools deploy --only hosting`
 
 ---
 
