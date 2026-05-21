@@ -17,12 +17,16 @@ export class Projectile {
         this.vz = velocity.z;
         this.shooter = shooterTank;
         
+        const isAddMode = state.shotMode === 'add';
+        const projColor = isAddMode ? 0x10b981 : 0x38bdf8;
+        const lightColor = isAddMode ? 0x10b981 : 0x06b6d4;
+
         const geom = new THREE.SphereGeometry(0.35, 8, 8);
-        const mat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+        const mat = new THREE.MeshBasicMaterial({ color: projColor });
         this.mesh = new THREE.Mesh(geom, mat);
         this.mesh.position.set(startX, startY, startZ);
         
-        this.light = new THREE.PointLight(0x06b6d4, 1.5, 12);
+        this.light = new THREE.PointLight(lightColor, 1.5, 12);
         this.mesh.add(this.light);
         
         state.scene.add(this.mesh);
@@ -100,13 +104,47 @@ export class Projectile {
     }
 
     explode(ex, ey, ez) {
-        playSound('explosion');
-        
-        state.screenShakeIntensity = 1.3;
-
         const gx = Math.round(ex / BLOCK_SIZE);
         const gy = Math.round(ey / BLOCK_SIZE);
         const gz = Math.round(ez / BLOCK_SIZE);
+
+        if (state.shotMode === 'add') {
+            playSound('charge');
+            state.screenShakeIntensity = 0.4;
+
+            const addRadius = 2.4;
+            const blockType = 4; // Lebendige Energiekristalle (Smaragd-Grün)
+
+            for (let dx = -3; dx <= 3; dx++) {
+                for (let dy = -3; dy <= 3; dy++) {
+                    for (let dz = -3; dz <= 3; dz++) {
+                        const tx = gx + dx;
+                        const ty = gy + dy;
+                        const tz = gz + dz;
+
+                        if (tx >= 0 && tx < GRID_SIZE_X && ty >= 0 && ty < GRID_SIZE_Y && tz >= 0 && tz < GRID_SIZE_Z) {
+                            const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+                            if (dist <= addRadius) {
+                                if (getBlock(tx, ty, tz) === 0) {
+                                    setBlock(tx, ty, tz, blockType);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            buildTerrainMesh();
+            applyGravityToTanks();
+
+            spawnExplosion(new THREE.Vector3(ex, ey, ez), 0x10b981, 35);
+            this.destroy();
+            return;
+        }
+
+        playSound('explosion');
+        
+        state.screenShakeIntensity = 1.3;
 
         const destroyRadius = 2.8;
 

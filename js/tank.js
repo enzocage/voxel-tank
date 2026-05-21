@@ -212,16 +212,19 @@ export function spawnTanks() {
 export function applyGravityToTanks() {
     tanks.forEach(tank => {
         const surfaceY = getSurfaceY(tank.x, tank.z);
-        if (tank.y > surfaceY) {
-            const fallDistance = tank.y - surfaceY;
-            tank.y = surfaceY;
-            tank.updateMeshPosition();
-
-            if (fallDistance >= 2) {
-                const dmg = Math.round(fallDistance * 14);
-                tank.takeDamage(dmg);
-                showAnnouncement(`${tank.name} stürzt ab: -${dmg} HP!`);
+        if (tank.y !== surfaceY) {
+            if (tank.y > surfaceY) {
+                const fallDistance = tank.y - surfaceY;
+                tank.y = surfaceY;
+                if (fallDistance >= 2) {
+                    const dmg = Math.round(fallDistance * 14);
+                    tank.takeDamage(dmg);
+                    showAnnouncement(`${tank.name} stürzt ab: -${dmg} HP!`);
+                }
+            } else {
+                tank.y = surfaceY;
             }
+            tank.updateMeshPosition();
         }
     });
 }

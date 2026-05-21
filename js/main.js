@@ -2,7 +2,7 @@
 import { GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, BLOCK_SIZE } from './constants.js';
 import { state, tanks, projectiles, particles } from './state.js';
 import { generateTerrain, buildTerrainMesh, getBlock } from './terrain.js';
-import { audioState, playSound, soundtrack, toggleSoundtrack, setSoundtrackVolume } from './audio.js?v=3';
+import { audioState, playSound, soundtrack, toggleSoundtrack, setSoundtrackVolume } from './audio.js?v=4';
 import { spawnTanks } from './tank.js';
 import { setupInput, startCharging, fireProjectile } from './input.js';
 import { updateWindUI, setPhase, selectTank, nextTurn, updateUI, highlightPossibleMoves } from './ui.js';
@@ -142,6 +142,10 @@ function updateTrajectoryPreview() {
     if (!state.selectedTank || state.currentPhase !== 'AIM' || projectiles.length > 0) {
         state.trajectoryMesh.geometry.setFromPoints([]);
         return;
+    }
+
+    if (state.trajectoryMesh && state.trajectoryMesh.material) {
+        state.trajectoryMesh.material.color.setHex(state.shotMode === 'add' ? 0x10b981 : 0x38bdf8);
     }
 
     const yaw = state.selectedTank.bodyYaw + state.selectedTank.turretYaw;
@@ -374,6 +378,22 @@ function setupUIEventListeners() {
                 icon.className = "fa-solid fa-volume-xmark text-slate-500";
             }
             playSound('click');
+        });
+    }
+
+    const btnToggleMode = document.getElementById('btn-toggle-mode');
+    if (btnToggleMode) {
+        btnToggleMode.addEventListener('click', () => {
+            playSound('click');
+            if (state.shotMode === 'sub') {
+                state.shotMode = 'add';
+                btnToggleMode.innerText = 'ADD';
+                btnToggleMode.className = "flex-shrink-0 cyber-font text-[8px] font-bold py-1.5 px-3 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-emerald-950/40 text-emerald-400 border-emerald-500/30 hover:bg-emerald-900/40 hover:border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)]";
+            } else {
+                state.shotMode = 'sub';
+                btnToggleMode.innerText = 'SUB';
+                btnToggleMode.className = "flex-shrink-0 cyber-font text-[8px] font-bold py-1.5 px-3 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-rose-950/40 text-rose-400 border-rose-500/30 hover:bg-rose-900/40 hover:border-rose-500/50";
+            }
         });
     }
 

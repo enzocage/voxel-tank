@@ -15,6 +15,7 @@ export const state = {
     isGameOver: false,
     keysPressed: {},
     moveCooldown: false,
+    shotMode: 'sub', // 'sub' (destructive) or 'add' (constructive)
     
     windDirection: Math.random() * Math.PI * 2,
     windSpeed: Math.floor(Math.random() * 8),
