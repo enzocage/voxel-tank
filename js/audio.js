@@ -154,6 +154,72 @@ export function playSound(type, extra = {}) {
             osc1.stop(now + 1.5);
             osc2.stop(now + 1.5);
         }
+        else if (type === 'wall_deploy') {
+            const osc = audioCtx.createOscillator();
+            const osc2 = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(100, now);
+            osc.frequency.exponentialRampToValueAtTime(350, now + 0.6);
+            
+            osc2.type = 'triangle';
+            osc2.frequency.setValueAtTime(150, now);
+            osc2.frequency.exponentialRampToValueAtTime(700, now + 0.6);
+            
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(200, now);
+            filter.frequency.exponentialRampToValueAtTime(1800, now + 0.5);
+            
+            gain.gain.setValueAtTime(0.25, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+            
+            osc.connect(filter);
+            osc2.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start(now);
+            osc2.start(now);
+            osc.stop(now + 0.8);
+            osc2.stop(now + 0.8);
+        }
+        else if (type === 'add_deploy') {
+            const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50];
+            notes.forEach((freq, idx) => {
+                const noteTime = now + idx * 0.06;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, noteTime);
+                osc.frequency.exponentialRampToValueAtTime(freq * 1.5, noteTime + 0.15);
+                
+                gain.gain.setValueAtTime(0.12, noteTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.25);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(noteTime);
+                osc.stop(noteTime + 0.25);
+            });
+        }
+        else if (type === 'build_click') {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(1200, now);
+            osc.frequency.exponentialRampToValueAtTime(100, now + 0.03);
+            
+            gain.gain.setValueAtTime(0.04, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.03);
+        }
     } catch (e) {
         console.warn("Audio-Fehler:", e);
     }

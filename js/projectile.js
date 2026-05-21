@@ -1,11 +1,11 @@
 // Projectile logic, movement, and terrain destruction
-import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, PALETTE } from './constants.js?v=16';
-import { state, projectiles, tanks } from './state.js?v=16';
-import { getBlock, setBlock, buildTerrainMesh, getSurfaceY } from './terrain.js?v=16';
-import { playSound } from './audio.js?v=16';
-import { spawnExplosion, spawnDebrisParticle, spawnTrailParticle } from './particles.js?v=16';
-import { applyGravityToTanks } from './tank.js?v=16';
-import { nextTurn, showAnnouncement, deployShield } from './ui.js?v=16';
+import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, PALETTE } from './constants.js?v=17';
+import { state, projectiles, tanks } from './state.js?v=17';
+import { getBlock, setBlock, buildTerrainMesh, getSurfaceY } from './terrain.js?v=17';
+import { playSound } from './audio.js?v=17';
+import { spawnExplosion, spawnDebrisParticle, spawnTrailParticle } from './particles.js?v=17';
+import { applyGravityToTanks } from './tank.js?v=17';
+import { nextTurn, showAnnouncement, deployShield } from './ui.js?v=17';
 
 export class Projectile {
     constructor(startX, startY, startZ, velocity, shooterTank) {
@@ -152,15 +152,18 @@ export class Projectile {
         }
 
         if (this.mode === 'add') {
-            playSound('charge');
+            playSound('add_deploy');
             state.screenShakeIntensity = 0.4;
 
-            const addRadius = 2.4;
+            const addRadius = 4.8;
             const blockType = 4; // Lebendige Energiekristalle (Smaragd-Grün)
 
-            for (let dx = -3; dx <= 3; dx++) {
-                for (let dy = -3; dy <= 3; dy++) {
-                    for (let dz = -3; dz <= 3; dz++) {
+            const blocksToPlace = [];
+            const startTime = performance.now();
+
+            for (let dx = -5; dx <= 5; dx++) {
+                for (let dy = -5; dy <= 5; dy++) {
+                    for (let dz = -5; dz <= 5; dz++) {
                         const tx = gx + dx;
                         const ty = gy + dy;
                         const tz = gz + dz;
@@ -169,7 +172,12 @@ export class Projectile {
                             const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
                             if (dist <= addRadius) {
                                 if (getBlock(tx, ty, tz) === 0) {
-                                    setBlock(tx, ty, tz, blockType);
+                                    blocksToPlace.push({
+                                        x: tx,
+                                        y: ty,
+                                        z: tz,
+                                        dist: dist
+                                    });
                                 }
                             }
                         }
@@ -177,8 +185,21 @@ export class Projectile {
                 }
             }
 
-            buildTerrainMesh();
-            applyGravityToTanks();
+            // Sort by distance from center (ascending) so it grows radially outward
+            blocksToPlace.sort((a, b) => a.dist - b.dist);
+
+            if (!state.pendingBlocks) state.pendingBlocks = [];
+            
+            blocksToPlace.forEach(b => {
+                const delay = b.dist * 80; // Outward radial delay (max ~384ms)
+                state.pendingBlocks.push({
+                    x: b.x,
+                    y: b.y,
+                    z: b.z,
+                    blockType: blockType,
+                    targetTime: startTime + delay
+                });
+            });
 
             spawnExplosion(new THREE.Vector3(ex, ey, ez), 0x10b981, 35);
             this.destroy();
@@ -186,7 +207,7 @@ export class Projectile {
         }
 
         if (this.mode === 'wall') {
-            playSound('charge');
+            playSound('wall_deploy');
             state.screenShakeIntensity = 0.5;
 
             // 1. Calculate orthogonal vector snap
@@ -207,8 +228,10 @@ export class Projectile {
             const wallHeight = 5;
             const blockType = (playerId === 1) ? 7 : 8; // 7 for Player 1, 8 for Player 2
 
-            // 2. Build the wall centered on the impact coordinate gx, gz
-            // Length: 10 voxels (from offset -5 to +4)
+            // 2. Queue the wall blocks centered on the impact coordinate gx, gz
+            const startTime = performance.now();
+            if (!state.pendingBlocks) state.pendingBlocks = [];
+
             for (let i = -5; i <= 4; i++) {
                 const tx = gx + dxVec * i;
                 const tz = gz + dzVec * i;
@@ -218,8 +241,18 @@ export class Projectile {
                     for (let dy = 0; dy < wallHeight; dy++) {
                         const ty = startY + dy;
                         if (ty < GRID_SIZE_Y) {
-                            setBlock(tx, ty, tz, blockType);
                             wallCoords.push({ x: tx, y: ty, z: tz });
+                            
+                            const colDist = Math.abs(i);
+                            const delay = colDist * 50 + dy * 15; // Outward sweeping + rising delay
+                            
+                            state.pendingBlocks.push({
+                                x: tx,
+                                y: ty,
+                                z: tz,
+                                blockType: blockType,
+                                targetTime: startTime + delay
+                            });
                         }
                     }
                 }
@@ -238,12 +271,11 @@ export class Projectile {
                         setBlock(coord.x, coord.y, coord.z, 0);
                     }
                 });
+                buildTerrainMesh();
+                applyGravityToTanks();
                 showAnnouncement(`Spieler ${playerId}: Älteste Wand entfernt (max. 3 Wände)!`);
             }
             state.playerWalls[playerId].push(wallCoords);
-
-            buildTerrainMesh();
-            applyGravityToTanks();
 
             spawnExplosion(new THREE.Vector3(ex, ey, ez), 0x8b5cf6, 35);
             this.destroy();

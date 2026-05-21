@@ -1,8 +1,8 @@
 // UI layouts, banner displays, updates, wind direction display, victory check, and selections
-import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js?v=16';
-import { state, tanks, movementHighlights } from './state.js?v=16';
-import { getSurfaceY } from './terrain.js?v=16';
-import { playSound } from './audio.js?v=16';
+import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js?v=17';
+import { state, tanks, movementHighlights } from './state.js?v=17';
+import { getSurfaceY } from './terrain.js?v=17';
+import { playSound } from './audio.js?v=17';
 
 export function showAnnouncement(text) {
     const container = document.getElementById('announcement-text');
@@ -292,6 +292,24 @@ export function updateUI() {
         selectedHp.innerText = "-";
         selectedMp.innerText = "-";
     }
+
+    // Update weapon toggle button based on state.shotMode
+    const btnToggleMode = document.getElementById('btn-toggle-mode');
+    if (btnToggleMode) {
+        if (state.shotMode === 'sub') {
+            btnToggleMode.innerText = 'SUB';
+            btnToggleMode.className = "flex-shrink-0 cyber-font text-[8px] font-bold py-1.5 px-3 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-rose-950/40 text-rose-400 border-rose-500/30 hover:bg-rose-900/40 hover:border-rose-500/50 shadow-[0_0_8px_rgba(244,63,94,0.2)]";
+        } else if (state.shotMode === 'add') {
+            btnToggleMode.innerText = 'ADD';
+            btnToggleMode.className = "flex-shrink-0 cyber-font text-[8px] font-bold py-1.5 px-3 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-emerald-950/40 text-emerald-400 border-emerald-500/30 hover:bg-emerald-900/40 hover:border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)]";
+        } else if (state.shotMode === 'wall') {
+            btnToggleMode.innerText = 'WALL';
+            btnToggleMode.className = "flex-shrink-0 cyber-font text-[8px] font-bold py-1.5 px-3 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-violet-950/40 text-violet-400 border-violet-500/30 hover:bg-violet-900/40 hover:border-violet-500/50 shadow-[0_0_8px_rgba(139,92,246,0.3)]";
+        } else if (state.shotMode === 'shield') {
+            btnToggleMode.innerText = 'SHIELD';
+            btnToggleMode.className = "flex-shrink-0 cyber-font text-[8px] font-bold py-1.5 px-3 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-cyan-950/40 text-cyan-400 border-cyan-500/30 hover:bg-cyan-900/40 hover:border-cyan-500/50 shadow-[0_0_8px_rgba(6,182,212,0.3)]";
+        }
+    }
 }
 
 export function updateWindUI() {
@@ -317,6 +335,7 @@ export function nextTurn() {
     if (state.isGameOver) return;
 
     state.activePlayer = state.activePlayer === 1 ? 2 : 1;
+    state.shotMode = 'sub'; // Reset shotMode to sub on every new turn!
     tickActiveShields(state.activePlayer);
 
     state.windDirection = Math.random() * Math.PI * 2;

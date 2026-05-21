@@ -1,11 +1,11 @@
 // Main Three.js setup, environment generation, and game loop
-import { GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, BLOCK_SIZE } from './constants.js?v=16';
-import { state, tanks, projectiles, particles } from './state.js?v=16';
-import { generateTerrain, buildTerrainMesh, getBlock } from './terrain.js?v=16';
-import { audioState, playSound, soundtrack, toggleSoundtrack, setSoundtrackVolume } from './audio.js?v=16';
-import { spawnTanks } from './tank.js?v=16';
-import { setupInput, startCharging, fireProjectile } from './input.js?v=16';
-import { updateWindUI, setPhase, selectTank, nextTurn, updateUI, highlightPossibleMoves } from './ui.js?v=16';
+import { GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, BLOCK_SIZE } from './constants.js?v=17';
+import { state, tanks, projectiles, particles } from './state.js?v=17';
+import { generateTerrain, buildTerrainMesh, getBlock, setBlock } from './terrain.js?v=17';
+import { audioState, playSound, soundtrack, toggleSoundtrack, setSoundtrackVolume } from './audio.js?v=17';
+import { spawnTanks, applyGravityToTanks } from './tank.js?v=17';
+import { setupInput, startCharging, fireProjectile } from './input.js?v=17';
+import { updateWindUI, setPhase, selectTank, nextTurn, updateUI, highlightPossibleMoves } from './ui.js?v=17';
 
 let clock = new THREE.Clock();
 
@@ -323,6 +323,34 @@ function animate() {
 
     const dt = Math.min(0.04, clock.getDelta()); 
 
+    // Process pending animated blocks
+    if (state.pendingBlocks && state.pendingBlocks.length > 0) {
+        const now = performance.now();
+        const readyBlocks = [];
+        const remainingBlocks = [];
+        
+        for (let i = 0; i < state.pendingBlocks.length; i++) {
+            const b = state.pendingBlocks[i];
+            if (b.targetTime <= now) {
+                readyBlocks.push(b);
+            } else {
+                remainingBlocks.push(b);
+            }
+        }
+        
+        if (readyBlocks.length > 0) {
+            state.pendingBlocks = remainingBlocks;
+            
+            readyBlocks.forEach(b => {
+                setBlock(b.x, b.y, b.z, b.blockType);
+            });
+            
+            buildTerrainMesh();
+            applyGravityToTanks();
+            playSound('build_click');
+        }
+    }
+
     handleTankMovement(dt);
     handleTankAiming(dt);
     updateChargePower();
@@ -513,30 +541,22 @@ function setupUIEventListeners() {
             playSound('click');
             if (state.shotMode === 'sub') {
                 state.shotMode = 'add';
-                btnToggleMode.innerText = 'ADD';
-                btnToggleMode.className = "flex-shrink-0 cyber-font text-[8px] font-bold py-1.5 px-3 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-emerald-950/40 text-emerald-400 border-emerald-500/30 hover:bg-emerald-900/40 hover:border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)]";
             } else if (state.shotMode === 'add') {
                 state.shotMode = 'wall';
-                btnToggleMode.innerText = 'WALL';
-                btnToggleMode.className = "flex-shrink-0 cyber-font text-[8px] font-bold py-1.5 px-3 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-violet-950/40 text-violet-400 border-violet-500/30 hover:bg-violet-900/40 hover:border-violet-500/50 shadow-[0_0_8px_rgba(139,92,246,0.3)]";
             } else if (state.shotMode === 'wall') {
                 if (!state.shieldCharges) state.shieldCharges = { 1: 1, 2: 1 };
                 const charge = state.shieldCharges[state.activePlayer];
                 if (charge > 0) {
                     state.shotMode = 'shield';
-                    btnToggleMode.innerText = 'SHIELD';
-                    btnToggleMode.className = "flex-shrink-0 cyber-font text-[8px] font-bold py-1.5 px-3 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-cyan-950/40 text-cyan-400 border-cyan-500/30 hover:bg-cyan-900/40 hover:border-cyan-500/50 shadow-[0_0_8px_rgba(6,182,212,0.3)]";
                 } else {
                     state.shotMode = 'sub';
-                    btnToggleMode.innerText = 'SUB';
-                    btnToggleMode.className = "flex-shrink-0 cyber-font text-[8px] font-bold py-1.5 px-3 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-rose-950/40 text-rose-400 border-rose-500/30 hover:bg-rose-900/40 hover:border-rose-500/50 shadow-[0_0_8px_rgba(244,63,94,0.2)]";
                 }
             } else {
                 state.shotMode = 'sub';
-                btnToggleMode.innerText = 'SUB';
-                btnToggleMode.className = "flex-shrink-0 cyber-font text-[8px] font-bold py-1.5 px-3 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-rose-950/40 text-rose-400 border-rose-500/30 hover:bg-rose-900/40 hover:border-rose-500/50 shadow-[0_0_8px_rgba(244,63,94,0.2)]";
             }
             console.log("Toggle mode button clicked. New shotMode:", state.shotMode);
+            updateUI();
+            updateTrajectoryPreview();
         });
     }
 

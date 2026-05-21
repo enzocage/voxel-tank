@@ -19,6 +19,7 @@ export const state = {
     playerWalls: { 1: [], 2: [] },
     activeShields: [], // List of { owner, center, radius, turnsLeft, mesh, textSprite }
     shieldCharges: { 1: 1, 2: 1 }, // Each player gets exactly 1 shield deployment per game
+    pendingBlocks: [], // Queued voxel placements { x, y, z, blockType, targetTime }
     
     windDirection: Math.random() * Math.PI * 2,
     windSpeed: Math.floor(Math.random() * 8),
