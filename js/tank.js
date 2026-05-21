@@ -1,10 +1,10 @@
 // Tank model generation, positioning, health, and gravity
-import { BLOCK_SIZE } from './constants.js';
-import { state, tanks } from './state.js';
-import { getSurfaceY } from './terrain.js';
-import { playSound } from './audio.js';
-import { spawnDamageParticles, spawnExplosion } from './particles.js';
-import { updateUI, checkVictory, showAnnouncement } from './ui.js';
+import { BLOCK_SIZE } from './constants.js?v=4';
+import { state, tanks } from './state.js?v=4';
+import { getSurfaceY } from './terrain.js?v=4';
+import { playSound } from './audio.js?v=4';
+import { spawnDamageParticles, spawnExplosion } from './particles.js?v=4';
+import { updateUI, checkVictory, showAnnouncement } from './ui.js?v=4';
 
 export class Tank {
     constructor(id, player, x, z, color, name) {

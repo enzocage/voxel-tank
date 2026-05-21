@@ -1,8 +1,8 @@
 // UI layouts, banner displays, updates, wind direction display, victory check, and selections
-import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js';
-import { state, tanks, movementHighlights } from './state.js';
-import { getSurfaceY } from './terrain.js';
-import { playSound } from './audio.js';
+import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js?v=4';
+import { state, tanks, movementHighlights } from './state.js?v=4';
+import { getSurfaceY } from './terrain.js?v=4';
+import { playSound } from './audio.js?v=4';
 
 export function showAnnouncement(text) {
     const container = document.getElementById('announcement-text');

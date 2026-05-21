@@ -1,11 +1,11 @@
 // Main Three.js setup, environment generation, and game loop
-import { GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, BLOCK_SIZE } from './constants.js';
-import { state, tanks, projectiles, particles } from './state.js';
-import { generateTerrain, buildTerrainMesh, getBlock } from './terrain.js';
+import { GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, BLOCK_SIZE } from './constants.js?v=4';
+import { state, tanks, projectiles, particles } from './state.js?v=4';
+import { generateTerrain, buildTerrainMesh, getBlock } from './terrain.js?v=4';
 import { audioState, playSound, soundtrack, toggleSoundtrack, setSoundtrackVolume } from './audio.js?v=4';
-import { spawnTanks } from './tank.js';
-import { setupInput, startCharging, fireProjectile } from './input.js';
-import { updateWindUI, setPhase, selectTank, nextTurn, updateUI, highlightPossibleMoves } from './ui.js';
+import { spawnTanks } from './tank.js?v=4';
+import { setupInput, startCharging, fireProjectile } from './input.js?v=4';
+import { updateWindUI, setPhase, selectTank, nextTurn, updateUI, highlightPossibleMoves } from './ui.js?v=4';
 
 let clock = new THREE.Clock();
 
@@ -394,6 +394,7 @@ function setupUIEventListeners() {
                 btnToggleMode.innerText = 'SUB';
                 btnToggleMode.className = "flex-shrink-0 cyber-font text-[8px] font-bold py-1.5 px-3 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-rose-950/40 text-rose-400 border-rose-500/30 hover:bg-rose-900/40 hover:border-rose-500/50";
             }
+            console.log("Toggle mode button clicked. New shotMode:", state.shotMode);
         });
     }
 

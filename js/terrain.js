@@ -1,6 +1,6 @@
 // Voxel Grid management and Terrain Generation
-import { GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, BLOCK_SIZE, PALETTE } from './constants.js';
-import { state } from './state.js';
+import { GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, BLOCK_SIZE, PALETTE } from './constants.js?v=4';
+import { state } from './state.js?v=4';
 
 export const voxelGrid = new Uint8Array(GRID_SIZE_X * GRID_SIZE_Y * GRID_SIZE_Z);
 

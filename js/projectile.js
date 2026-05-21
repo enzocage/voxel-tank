@@ -1,11 +1,11 @@
 // Projectile logic, movement, and terrain destruction
-import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, PALETTE } from './constants.js';
-import { state, projectiles, tanks } from './state.js';
-import { getBlock, setBlock, buildTerrainMesh } from './terrain.js';
-import { playSound } from './audio.js';
-import { spawnExplosion, spawnDebrisParticle, spawnTrailParticle } from './particles.js';
-import { applyGravityToTanks } from './tank.js';
-import { nextTurn, showAnnouncement } from './ui.js';
+import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, PALETTE } from './constants.js?v=4';
+import { state, projectiles, tanks } from './state.js?v=4';
+import { getBlock, setBlock, buildTerrainMesh } from './terrain.js?v=4';
+import { playSound } from './audio.js?v=4';
+import { spawnExplosion, spawnDebrisParticle, spawnTrailParticle } from './particles.js?v=4';
+import { applyGravityToTanks } from './tank.js?v=4';
+import { nextTurn, showAnnouncement } from './ui.js?v=4';
 
 export class Projectile {
     constructor(startX, startY, startZ, velocity, shooterTank) {
@@ -107,6 +107,8 @@ export class Projectile {
         const gx = Math.round(ex / BLOCK_SIZE);
         const gy = Math.round(ey / BLOCK_SIZE);
         const gz = Math.round(ez / BLOCK_SIZE);
+        
+        console.log("Projectile explode. Shot Mode:", state.shotMode, "Impact Voxel:", gx, gy, gz);
 
         if (state.shotMode === 'add') {
             playSound('charge');
