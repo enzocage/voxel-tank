@@ -249,7 +249,7 @@ export function updateUI() {
         shootPanel.classList.add('opacity-50');
         shootBtn.disabled = true;
         shootBtn.innerText = "ERST BEWEGUNG ABSCHLIESSEN";
-        shootBtn.className = "mt-2 w-full cyber-font text-[8px] font-bold bg-slate-800 text-slate-500 py-1.5 rounded-lg shadow-md tracking-wider border border-slate-700 cursor-not-allowed";
+        shootBtn.className = "flex-1 cyber-font text-[8px] font-bold bg-slate-800 text-slate-500 py-1.5 rounded-lg shadow-md tracking-wider border border-slate-700 cursor-not-allowed";
         
         phaseActionBtn.disabled = true;
         phaseActionBtn.innerText = "WÄHLEN...";
@@ -269,7 +269,7 @@ export function updateUI() {
         shootPanel.classList.add('opacity-50');
         shootBtn.disabled = true;
         shootBtn.innerText = "ERST BEWEGUNG ABSCHLIESSEN";
-        shootBtn.className = "mt-2 w-full cyber-font text-[8px] font-bold bg-slate-800 text-slate-500 py-1.5 rounded-lg shadow-md tracking-wider border border-slate-700 cursor-not-allowed";
+        shootBtn.className = "flex-1 cyber-font text-[8px] font-bold bg-slate-800 text-slate-500 py-1.5 rounded-lg shadow-md tracking-wider border border-slate-700 cursor-not-allowed";
 
         phaseActionBtn.disabled = false;
         phaseActionBtn.innerText = "ZUM ZIELEN";
@@ -289,7 +289,7 @@ export function updateUI() {
         shootPanel.classList.remove('opacity-50');
         shootBtn.disabled = false;
         shootBtn.innerText = "FEUERKNOPF HALTEN (LEERTASTE)";
-        shootBtn.className = "mt-2 w-full cyber-font text-[8px] font-bold bg-gradient-to-r from-red-600/80 to-indigo-600/80 hover:from-red-500 hover:to-indigo-500 active:scale-95 text-white py-1.5 rounded-lg shadow-md transition-all cursor-pointer tracking-wider border border-red-400/20";
+        shootBtn.className = "flex-1 cyber-font text-[8px] font-bold bg-gradient-to-r from-red-600/80 to-indigo-600/80 hover:from-red-500 hover:to-indigo-500 active:scale-95 text-white py-1.5 rounded-lg shadow-md transition-all cursor-pointer tracking-wider border border-red-400/20";
 
         phaseActionBtn.disabled = true;
         phaseActionBtn.innerText = "FEUERN!";
@@ -349,17 +349,17 @@ export function updateUI() {
     const btnToggleMode = document.getElementById('btn-toggle-mode');
     if (btnToggleMode) {
         if (state.shotMode === 'sub') {
-            btnToggleMode.innerText = 'SUB';
-            btnToggleMode.className = "flex-shrink-0 cyber-font text-[8px] font-bold py-1.5 px-3 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-rose-950/40 text-rose-400 border-rose-500/30 hover:bg-rose-900/40 hover:border-rose-500/50 shadow-[0_0_8px_rgba(244,63,94,0.2)]";
+            btnToggleMode.innerText = 'DESTROY';
+            btnToggleMode.className = "flex-1 cyber-font text-[8px] font-bold py-1.5 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-rose-950/40 text-rose-400 border-rose-500/30 hover:bg-rose-900/40 hover:border-rose-500/50 shadow-[0_0_8px_rgba(244,63,94,0.2)] btn-mode-glow";
         } else if (state.shotMode === 'add') {
-            btnToggleMode.innerText = 'ADD';
-            btnToggleMode.className = "flex-shrink-0 cyber-font text-[8px] font-bold py-1.5 px-3 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-emerald-950/40 text-emerald-400 border-emerald-500/30 hover:bg-emerald-900/40 hover:border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)]";
+            btnToggleMode.innerText = 'VOXEL';
+            btnToggleMode.className = "flex-1 cyber-font text-[8px] font-bold py-1.5 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-emerald-950/40 text-emerald-400 border-emerald-500/30 hover:bg-emerald-900/40 hover:border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] btn-mode-glow";
         } else if (state.shotMode === 'wall') {
             btnToggleMode.innerText = 'WALL';
-            btnToggleMode.className = "flex-shrink-0 cyber-font text-[8px] font-bold py-1.5 px-3 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-violet-950/40 text-violet-400 border-violet-500/30 hover:bg-violet-900/40 hover:border-violet-500/50 shadow-[0_0_8px_rgba(139,92,246,0.3)]";
+            btnToggleMode.className = "flex-1 cyber-font text-[8px] font-bold py-1.5 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-violet-950/40 text-violet-400 border-violet-500/30 hover:bg-violet-900/40 hover:border-violet-500/50 shadow-[0_0_8px_rgba(139,92,246,0.3)] btn-mode-glow";
         } else if (state.shotMode === 'shield') {
             btnToggleMode.innerText = 'SHIELD';
-            btnToggleMode.className = "flex-shrink-0 cyber-font text-[8px] font-bold py-1.5 px-3 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-cyan-950/40 text-cyan-400 border-cyan-500/30 hover:bg-cyan-900/40 hover:border-cyan-500/50 shadow-[0_0_8px_rgba(6,182,212,0.3)]";
+            btnToggleMode.className = "flex-1 cyber-font text-[8px] font-bold py-1.5 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-cyan-950/40 text-cyan-400 border-cyan-500/30 hover:bg-cyan-900/40 hover:border-cyan-500/50 shadow-[0_0_8px_rgba(6,182,212,0.3)] btn-mode-glow";
         }
     }
 
@@ -368,7 +368,7 @@ export function updateUI() {
         if (shootBtn) {
             shootBtn.disabled = true;
             shootBtn.innerText = "WARTEN AUF GEGNER...";
-            shootBtn.className = "mt-2 w-full cyber-font text-[8px] font-bold bg-slate-800 text-slate-500 py-1.5 rounded-lg shadow-md tracking-wider border border-slate-700 cursor-not-allowed";
+            shootBtn.className = "flex-1 cyber-font text-[8px] font-bold bg-slate-800 text-slate-500 py-1.5 rounded-lg shadow-md tracking-wider border border-slate-700 cursor-not-allowed";
         }
         if (phaseActionBtn) {
             phaseActionBtn.disabled = true;

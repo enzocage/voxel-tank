@@ -322,8 +322,8 @@ function updateTrajectoryPreview() {
     for (let step = 0; step < maxSteps; step++) {
         points.push(new THREE.Vector3(tx, ty, tz));
         tvy -= 11.5 * timeStep;
-        tvx += Math.sin(state.windDirection) * state.windSpeed * 0.08 * timeStep;
-        tvz += Math.cos(state.windDirection) * state.windSpeed * 0.08 * timeStep;
+        tvx += Math.sin(state.windDirection) * state.windSpeed * 0.4 * timeStep;
+        tvz += Math.cos(state.windDirection) * state.windSpeed * 0.4 * timeStep;
         tx += tvx * timeStep; ty += tvy * timeStep; tz += tvz * timeStep;
 
         const gx = Math.round(tx / BLOCK_SIZE), gy = Math.round(ty / BLOCK_SIZE), gz = Math.round(tz / BLOCK_SIZE);

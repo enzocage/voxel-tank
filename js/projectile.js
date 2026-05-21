@@ -55,8 +55,8 @@ export class Projectile {
         const gravity = 11.5;
         this.vy -= gravity * dt;
 
-        const windForceX = Math.sin(state.windDirection) * state.windSpeed * 0.08;
-        const windForceZ = Math.cos(state.windDirection) * state.windSpeed * 0.08;
+        const windForceX = Math.sin(state.windDirection) * state.windSpeed * 0.4;
+        const windForceZ = Math.cos(state.windDirection) * state.windSpeed * 0.4;
         this.vx += windForceX * dt;
         this.vz += windForceZ * dt;
 
