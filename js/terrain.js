@@ -1,8 +1,17 @@
 // Voxel Grid management and Terrain Generation
-import { GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, BLOCK_SIZE, PALETTE } from './constants.js?v=17';
-import { state } from './state.js?v=17';
+import { GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, BLOCK_SIZE, PALETTE } from './constants.js?v=21';
+import { state } from './state.js?v=21';
 
 export const voxelGrid = new Uint8Array(GRID_SIZE_X * GRID_SIZE_Y * GRID_SIZE_Z);
+
+function mulberry32(a) {
+    return function() {
+        let t = a += 0x6D2B79F5;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    }
+}
 
 export function getGridIndex(x, y, z) {
     return x + y * GRID_SIZE_X + z * GRID_SIZE_X * GRID_SIZE_Y;
@@ -27,7 +36,11 @@ export function getSurfaceY(x, z) {
     return 0;
 }
 
-export function generateTerrain() {
+export function generateTerrain(seed) {
+    const s = seed !== undefined ? seed : (state.terrainSeed !== null ? state.terrainSeed : Math.random() * 1000000);
+    const seedInt = typeof s === 'string' ? parseInt(s) : Math.floor(s);
+    const rng = mulberry32(seedInt);
+
     for (let x = 0; x < GRID_SIZE_X; x++) {
         for (let z = 0; z < GRID_SIZE_Z; z++) {
             const nx = x / GRID_SIZE_X;
@@ -43,9 +56,9 @@ export function generateTerrain() {
             
             for (let y = 0; y < GRID_SIZE_Y; y++) {
                 if (y < height - 1) {
-                    setBlock(x, y, z, Math.random() < 0.08 ? 2 : 1);
+                    setBlock(x, y, z, rng() < 0.08 ? 2 : 1);
                 } else if (y === height - 1) {
-                    const r = Math.random();
+                    const r = rng();
                     const blockType = r < 0.85 ? 3 : (r < 0.93 ? 4 : 5);
                     setBlock(x, y, z, blockType);
                 } else {

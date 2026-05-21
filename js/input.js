@@ -1,9 +1,9 @@
 // Keyboard, Mouse, and Touch input handling
-import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js?v=17';
-import { state, tanks, projectiles } from './state.js?v=17';
-import { getSurfaceY } from './terrain.js?v=17';
-import { playSound } from './audio.js?v=17';
-import { Projectile } from './projectile.js?v=17';
+import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js?v=21';
+import { state, tanks, projectiles } from './state.js?v=21';
+import { getSurfaceY } from './terrain.js?v=21';
+import { playSound } from './audio.js?v=21';
+import { Projectile } from './projectile.js?v=21';
 import { 
     setPhase, 
     selectTank, 
@@ -13,10 +13,19 @@ import {
     adjustCameraFocusOnTank,
     deployShield,
     nextTurn
-} from './ui.js?v=17';
+} from './ui.js?v=21';
+import { syncActiveTankState, syncActionsRemaining, syncShotLaunch } from './multiplayer.js?v=21';
+
+function isLocalTurn() {
+    if (state.isMultiplayer) {
+        return state.activePlayer === state.localPlayerRole;
+    }
+    return true;
+}
 
 export function attemptStep(dx, dz) {
     if (!state.selectedTank || state.actionsRemaining <= 0) return;
+    if (!isLocalTurn()) return;
 
     const nx = state.selectedTank.x + dx;
     const nz = state.selectedTank.z + dz;
@@ -39,6 +48,11 @@ export function attemptStep(dx, dz) {
                 adjustCameraFocusOnTank(state.selectedTank);
                 highlightPossibleMoves();
                 updateUI();
+
+                if (state.isMultiplayer) {
+                    syncActiveTankState();
+                    syncActionsRemaining(state.actionsRemaining);
+                }
 
                 if (state.actionsRemaining <= 0) {
                     setTimeout(() => {
@@ -65,6 +79,10 @@ export function fireProjectile() {
         
         deployShield(ex, ey, ez, state.activePlayer);
         
+        if (state.isMultiplayer) {
+            syncShotLaunch(state.selectedTank.id, 'shield', 0, 0, 0);
+        }
+
         document.getElementById('power-bar').style.width = '0%';
         document.getElementById('power-percentage').innerText = '0%';
         state.trajectoryMesh.geometry.setFromPoints([]);
@@ -73,7 +91,14 @@ export function fireProjectile() {
         updateUI();
         
         setTimeout(() => {
-            nextTurn();
+            if (state.isMultiplayer) {
+                const nextRole = (state.localPlayerRole === 1) ? 2 : 1;
+                import('./multiplayer.js?v=21').then(mp => {
+                    mp.syncNextTurn(nextRole);
+                });
+            } else {
+                nextTurn();
+            }
         }, 1600);
         return;
     }
@@ -99,6 +124,10 @@ export function fireProjectile() {
 
     const velocity = new THREE.Vector3(dirX * speed, dirY * speed, dirZ * speed);
 
+    if (state.isMultiplayer) {
+        syncShotLaunch(state.selectedTank.id, state.shotMode, yaw, pitch, speed);
+    }
+
     projectiles.push(new Projectile(startX, startY, startZ, velocity, state.selectedTank));
     playSound('shoot');
 
@@ -112,6 +141,7 @@ export function fireProjectile() {
 
 export function setupInput() {
     window.addEventListener('keydown', (e) => {
+        if (!isLocalTurn()) return;
         state.keysPressed[e.code] = true;
 
         // Phase 2: BEWEGUNG
@@ -155,6 +185,7 @@ export function setupInput() {
     });
 
     window.addEventListener('keyup', (e) => {
+        if (!isLocalTurn()) return;
         state.keysPressed[e.code] = false;
 
         if (state.currentPhase === 'AIM' && e.code === 'Space' && state.isCharging) {
@@ -165,20 +196,24 @@ export function setupInput() {
 
     const shootBtn = document.getElementById('shoot-button');
     shootBtn.addEventListener('mousedown', () => {
+        if (!isLocalTurn()) return;
         if (state.currentPhase === 'AIM' && state.selectedTank && projectiles.length === 0 && !state.isGameOver) {
             startCharging();
         }
     });
     shootBtn.addEventListener('mouseup', () => {
+        if (!isLocalTurn()) return;
         if (state.isCharging) fireProjectile();
     });
     shootBtn.addEventListener('touchstart', (e) => {
+        if (!isLocalTurn()) return;
         e.preventDefault();
         if (state.currentPhase === 'AIM' && state.selectedTank && projectiles.length === 0 && !state.isGameOver) {
             startCharging();
         }
     });
     shootBtn.addEventListener('touchend', (e) => {
+        if (!isLocalTurn()) return;
         e.preventDefault();
         if (state.isCharging) fireProjectile();
     });
@@ -193,6 +228,7 @@ export function setupInput() {
     let lastClickedTankId = null;
 
     function handleSelectClick(clientX, clientY) {
+        if (!isLocalTurn()) return;
         mouse.x = (clientX / window.innerWidth) * 2 - 1;
         mouse.y = -(clientY / window.innerHeight) * 2 + 1;
 
@@ -243,6 +279,7 @@ export function setupInput() {
     }
 
     function onPointerDown(e) {
+        if (!isLocalTurn()) return;
         if (e.button !== undefined && e.button !== 0) return;
         
         clickStartX = e.clientX;
@@ -251,6 +288,7 @@ export function setupInput() {
     }
 
     function onPointerUp(e) {
+        if (!isLocalTurn()) return;
         if (e.button !== undefined && e.button !== 0) return;
 
         const dist = Math.sqrt(Math.pow(e.clientX - clickStartX, 2) + Math.pow(e.clientY - clickStartY, 2));

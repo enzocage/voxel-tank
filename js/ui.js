@@ -1,8 +1,11 @@
 // UI layouts, banner displays, updates, wind direction display, victory check, and selections
-import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js?v=17';
-import { state, tanks, movementHighlights } from './state.js?v=17';
-import { getSurfaceY } from './terrain.js?v=17';
-import { playSound } from './audio.js?v=17';
+import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js?v=21';
+import { state, tanks, movementHighlights, projectiles, particles } from './state.js?v=21';
+import { getSurfaceY, generateTerrain, buildTerrainMesh } from './terrain.js?v=21';
+import { playSound } from './audio.js?v=21';
+import { spawnTanks } from './tank.js?v=21';
+import { initAuth, registerWithEmail, loginWithEmail, loginAnonymouslyAsGuest, logoutUser, getLeaderboard, recordMatchResult } from './auth.js?v=21';
+import { createLobby, joinLobby, leaveLobby } from './multiplayer.js?v=21';
 
 export function showAnnouncement(text) {
     const container = document.getElementById('announcement-text');
@@ -310,6 +313,29 @@ export function updateUI() {
             btnToggleMode.className = "flex-shrink-0 cyber-font text-[8px] font-bold py-1.5 px-3 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-cyan-950/40 text-cyan-400 border-cyan-500/30 hover:bg-cyan-900/40 hover:border-cyan-500/50 shadow-[0_0_8px_rgba(6,182,212,0.3)]";
         }
     }
+
+    if (state.isMultiplayer && state.activePlayer !== state.localPlayerRole) {
+        const btnSkipTurn = document.getElementById('btn-skip-turn');
+        if (shootBtn) {
+            shootBtn.disabled = true;
+            shootBtn.innerText = "WARTEN AUF GEGNER...";
+            shootBtn.className = "mt-2 w-full cyber-font text-[8px] font-bold bg-slate-800 text-slate-500 py-1.5 rounded-lg shadow-md tracking-wider border border-slate-700 cursor-not-allowed";
+        }
+        if (phaseActionBtn) {
+            phaseActionBtn.disabled = true;
+            phaseActionBtn.innerText = "GEGNER ZUG...";
+            phaseActionBtn.className = "bg-slate-800 text-slate-500 text-[10px] px-2 py-1.5 rounded-md font-bold cursor-not-allowed border border-slate-700 tech-font";
+        }
+        if (btnToggleMode) {
+            btnToggleMode.disabled = true;
+            btnToggleMode.className = "flex-shrink-0 cyber-font text-[8px] font-bold py-1.5 px-3 rounded-lg shadow-md tracking-wider border cursor-not-allowed transition-all duration-300 bg-slate-800 text-slate-500 border-slate-700";
+        }
+        if (btnSkipTurn) {
+            btnSkipTurn.disabled = true;
+            btnSkipTurn.className = "bg-slate-800 text-slate-500 text-[10px] px-2 py-1.5 rounded-md font-bold cursor-not-allowed border border-slate-700 tech-font";
+        }
+        shootPanel.classList.add('opacity-50');
+    }
 }
 
 export function updateWindUI() {
@@ -331,15 +357,21 @@ export function updateWindUI() {
     }
 }
 
-export function nextTurn() {
+export function nextTurn(targetPlayer = null) {
     if (state.isGameOver) return;
 
-    state.activePlayer = state.activePlayer === 1 ? 2 : 1;
+    if (targetPlayer !== null) {
+        state.activePlayer = targetPlayer;
+    } else {
+        state.activePlayer = state.activePlayer === 1 ? 2 : 1;
+    }
     state.shotMode = 'sub'; // Reset shotMode to sub on every new turn!
     tickActiveShields(state.activePlayer);
 
-    state.windDirection = Math.random() * Math.PI * 2;
-    state.windSpeed = Math.floor(Math.random() * 9); 
+    if (!state.isMultiplayer) {
+        state.windDirection = Math.random() * Math.PI * 2;
+        state.windSpeed = Math.floor(Math.random() * 9); 
+    }
     updateWindUI();
 
     const banner = document.getElementById('turn-banner');
@@ -372,15 +404,28 @@ export function checkVictory() {
         const modal = document.getElementById('game-over-modal');
         const text = document.getElementById('winner-text');
         
-        if (p1Alive) {
+        let winnerRole = 0;
+        if (p1Alive && !p2Alive) {
             text.innerText = "Spieler 1 dominiert das Schlachtfeld!";
             text.className = "tech-font text-base text-emerald-400 mb-4";
-        } else if (p2Alive) {
+            winnerRole = 1;
+        } else if (p2Alive && !p1Alive) {
             text.innerText = "Spieler 2 dominiert das Schlachtfeld!";
             text.className = "tech-font text-base text-rose-400 mb-4";
+            winnerRole = 2;
         } else {
             text.innerText = "Niemand überlebt das voxelierte Chaos!";
             text.className = "tech-font text-base text-slate-400 mb-4";
+        }
+
+        if (state.isMultiplayer && winnerRole !== 0) {
+            if (state.localPlayerRole === winnerRole) {
+                const myUid = state.playerUid;
+                const oppUid = state.opponentUid;
+                if (myUid) {
+                    recordMatchResult(myUid, oppUid);
+                }
+            }
         }
 
         if (modal) {
@@ -545,5 +590,298 @@ export function tickActiveShields(newActivePlayer) {
                 updateShieldSprite(shield);
             }
         }
+    }
+}
+
+export function startMultiplayerGame(seed) {
+    // Reset state variables
+    state.terrainSeed = seed;
+    state.isGameOver = false;
+    state.currentPhase = 'SELECT';
+    state.activePlayer = 1;
+    state.selectedTank = null;
+    state.actionsRemaining = 15;
+    state.isCharging = false;
+    state.chargeStartTime = 0;
+    state.moveCooldown = false;
+    state.shotMode = 'sub';
+    state.shieldCharges = { 1: 1, 2: 1 };
+    state.playerWalls = { 1: [], 2: [] };
+    state.pendingBlocks = [];
+
+    // Clear tanks
+    tanks.forEach(t => {
+        if (t.mesh) state.scene.remove(t.mesh);
+    });
+    tanks.length = 0;
+
+    // Clear projectiles
+    projectiles.forEach(p => {
+        if (p.mesh) state.scene.remove(p.mesh);
+    });
+    projectiles.length = 0;
+
+    // Clear particles
+    particles.forEach(p => {
+        if (p.mesh) state.scene.remove(p.mesh);
+    });
+    particles.length = 0;
+
+    // Clear shields
+    if (state.activeShields) {
+        state.activeShields.forEach(s => {
+            if (s.mesh) state.scene.remove(s.mesh);
+            if (s.textSprite) state.scene.remove(s.textSprite);
+            if (s.pointLight) state.scene.remove(s.pointLight);
+        });
+        state.activeShields = [];
+    }
+
+    // Clear highlights
+    clearHighlights();
+
+    // Re-generate terrain using seed
+    generateTerrain(seed);
+    buildTerrainMesh();
+
+    // Spawn tanks
+    spawnTanks();
+
+    // Update player names on UI
+    const p1Name = (state.localPlayerRole === 1) ? state.playerName : state.opponentName;
+    const p2Name = (state.localPlayerRole === 2) ? state.playerName : state.opponentName;
+    
+    const p1Label = document.getElementById('p1-card-title-text');
+    const p2Label = document.getElementById('p2-card-title-text');
+    if (p1Label) p1Label.innerText = p1Name.toUpperCase();
+    if (p2Label) p2Label.innerText = p2Name.toUpperCase();
+
+    // Hide intro modal
+    const intro = document.getElementById('intro-modal');
+    if (intro) {
+        intro.classList.add('opacity-0', 'pointer-events-none');
+    }
+
+    // If local player is player 1, select first tank
+    if (state.localPlayerRole === 1 && tanks.length > 0) {
+        selectTank(tanks[0]);
+        setPhase('SELECT');
+    } else {
+        updateUI();
+    }
+}
+
+export function setupMultiplayerUI() {
+    const tabLocal = document.getElementById('tab-local');
+    const tabMultiplayer = document.getElementById('tab-multiplayer');
+    const panelLocal = document.getElementById('panel-local');
+    const panelMultiplayer = document.getElementById('panel-multiplayer');
+
+    if (tabLocal && tabMultiplayer && panelLocal && panelMultiplayer) {
+        tabLocal.addEventListener('click', () => {
+            playSound('click');
+            tabLocal.className = "flex-1 py-2 text-center cyber-font text-[9px] font-bold text-indigo-400 border-b-2 border-indigo-500 tracking-wider";
+            tabMultiplayer.className = "flex-1 py-2 text-center cyber-font text-[9px] font-bold text-slate-400 border-b-2 border-transparent tracking-wider";
+            panelLocal.classList.remove('hidden');
+            panelMultiplayer.classList.add('hidden');
+        });
+
+        tabMultiplayer.addEventListener('click', () => {
+            playSound('click');
+            tabMultiplayer.className = "flex-1 py-2 text-center cyber-font text-[9px] font-bold text-indigo-400 border-b-2 border-indigo-500 tracking-wider";
+            tabLocal.className = "flex-1 py-2 text-center cyber-font text-[9px] font-bold text-slate-400 border-b-2 border-transparent tracking-wider";
+            panelMultiplayer.classList.remove('hidden');
+            panelLocal.classList.add('hidden');
+        });
+    }
+
+    const nameInput = document.getElementById('auth-name');
+    const emailInput = document.getElementById('auth-email');
+    const passInput = document.getElementById('auth-password');
+    const errorMsg = document.getElementById('auth-error-msg');
+
+    const authContainer = document.getElementById('auth-container');
+    const lobbyContainer = document.getElementById('lobby-container');
+    const waitingContainer = document.getElementById('waiting-container');
+
+    const lobbyPilotName = document.getElementById('lobby-pilot-name');
+    const lobbyPilotStats = document.getElementById('lobby-pilot-stats');
+
+    const btnLoginEmail = document.getElementById('btn-login-email');
+    const btnRegisterEmail = document.getElementById('btn-register-email');
+    const btnLoginGuest = document.getElementById('btn-login-guest');
+    const btnLogout = document.getElementById('btn-logout');
+
+    const showAuthError = (err) => {
+        if (errorMsg) {
+            let msg = err.message || err || "Ein Fehler ist aufgetreten.";
+            if (msg.includes("api-key-not-valid") || msg.includes("DummyKey") || msg.includes("API key not valid")) {
+                msg = "⚠️ Firebase API-Key ungültig! Bitte trage deine echten Firebase-Daten in index.html (Zeilen 19–27) ein. Eine Anleitung findest du in der Datei FIREBASE_SETUP.md.";
+            }
+            errorMsg.innerText = msg;
+            errorMsg.classList.remove('hidden');
+        }
+    };
+    const hideAuthError = () => {
+        if (errorMsg) errorMsg.classList.add('hidden');
+    };
+
+    if (btnLoginEmail) {
+        btnLoginEmail.addEventListener('click', async () => {
+            playSound('click');
+            hideAuthError();
+            const email = emailInput?.value || "";
+            const pass = passInput?.value || "";
+            try {
+                await loginWithEmail(email, pass);
+            } catch (err) {
+                showAuthError(err);
+            }
+        });
+    }
+
+    if (btnRegisterEmail) {
+        btnRegisterEmail.addEventListener('click', async () => {
+            playSound('click');
+            hideAuthError();
+            const name = nameInput?.value || "";
+            const email = emailInput?.value || "";
+            const pass = passInput?.value || "";
+            if (!name.trim()) {
+                showAuthError("Bitte gib einen Spielernamen ein.");
+                return;
+            }
+            try {
+                await registerWithEmail(email, pass, name);
+            } catch (err) {
+                showAuthError(err);
+            }
+        });
+    }
+
+    if (btnLoginGuest) {
+        btnLoginGuest.addEventListener('click', async () => {
+            playSound('click');
+            hideAuthError();
+            const name = nameInput?.value || "";
+            try {
+                await loginAnonymouslyAsGuest(name);
+            } catch (err) {
+                showAuthError(err);
+            }
+        });
+    }
+
+    if (btnLogout) {
+        btnLogout.addEventListener('click', async () => {
+            playSound('click');
+            hideAuthError();
+            try {
+                await logoutUser();
+            } catch (err) {
+                console.error(err);
+            }
+        });
+    }
+
+    const renderLeaderboard = async () => {
+        const listContainer = document.getElementById('leaderboard-list');
+        if (!listContainer) return;
+        listContainer.innerHTML = '<div class="text-slate-500 text-center py-2">Lade Pilotendaten...</div>';
+        try {
+            const list = await getLeaderboard();
+            listContainer.innerHTML = '';
+            if (list.length === 0) {
+                listContainer.innerHTML = '<div class="text-slate-500 text-center py-2">Keine Einträge vorhanden.</div>';
+                return;
+            }
+            list.forEach((user, idx) => {
+                const item = document.createElement('div');
+                item.className = "flex justify-between items-center py-0.5 border-b border-slate-900 last:border-b-0";
+                item.innerHTML = `
+                    <span class="truncate"><span class="text-indigo-400 font-bold">#${idx+1}</span> ${user.name}</span>
+                    <span class="tech-font font-bold text-slate-300">${user.wins} S / ${user.losses} N</span>
+                `;
+                listContainer.appendChild(item);
+            });
+        } catch (err) {
+            console.error("Leaderboard error:", err);
+            listContainer.innerHTML = '<div class="text-rose-400 text-center py-2">Ladefehler</div>';
+        }
+    };
+
+    initAuth((user) => {
+        if (user) {
+            if (lobbyPilotName) lobbyPilotName.innerText = state.playerName;
+            if (lobbyPilotStats) lobbyPilotStats.innerText = `${state.playerWins} Siege / ${state.playerLosses} Niederlagen`;
+            authContainer?.classList.add('hidden');
+            lobbyContainer?.classList.remove('hidden');
+            waitingContainer?.classList.add('hidden');
+            renderLeaderboard();
+        } else {
+            if (nameInput) nameInput.value = '';
+            if (emailInput) emailInput.value = '';
+            if (passInput) passInput.value = '';
+            authContainer?.classList.remove('hidden');
+            lobbyContainer?.classList.add('hidden');
+            waitingContainer?.classList.add('hidden');
+        }
+    });
+
+    const btnCreateLobby = document.getElementById('btn-create-lobby');
+    const btnJoinLobby = document.getElementById('btn-join-lobby');
+    const btnLeaveLobby = document.getElementById('btn-leave-lobby');
+    const joinRoomCodeInput = document.getElementById('join-room-code');
+
+    const waitingRoomCode = document.getElementById('waiting-room-code');
+    const waitingP1Name = document.getElementById('waiting-p1-name');
+    const waitingP2Name = document.getElementById('waiting-p2-name');
+
+    if (btnCreateLobby) {
+        btnCreateLobby.addEventListener('click', async () => {
+            playSound('click');
+            try {
+                const lobbyId = await createLobby();
+                if (waitingRoomCode) waitingRoomCode.innerText = lobbyId;
+                if (waitingP1Name) waitingP1Name.innerText = state.playerName;
+                if (waitingP2Name) waitingP2Name.innerText = "WARTE...";
+                
+                lobbyContainer?.classList.add('hidden');
+                waitingContainer?.classList.remove('hidden');
+            } catch (err) {
+                console.error("Create lobby error:", err);
+                alert(err.message || err);
+            }
+        });
+    }
+
+    if (btnJoinLobby) {
+        btnJoinLobby.addEventListener('click', async () => {
+            playSound('click');
+            const code = joinRoomCodeInput?.value || "";
+            if (!code.trim()) {
+                alert("Bitte gib einen Lobby-Code ein.");
+                return;
+            }
+            try {
+                await joinLobby(code);
+            } catch (err) {
+                console.error("Join lobby error:", err);
+                alert(err.message || err);
+            }
+        });
+    }
+
+    if (btnLeaveLobby) {
+        btnLeaveLobby.addEventListener('click', async () => {
+            playSound('click');
+            try {
+                await leaveLobby();
+                waitingContainer?.classList.add('hidden');
+                lobbyContainer?.classList.remove('hidden');
+            } catch (err) {
+                console.error("Leave lobby error:", err);
+            }
+        });
     }
 }

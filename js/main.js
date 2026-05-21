@@ -1,11 +1,12 @@
 // Main Three.js setup, environment generation, and game loop
-import { GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, BLOCK_SIZE } from './constants.js?v=17';
-import { state, tanks, projectiles, particles } from './state.js?v=17';
-import { generateTerrain, buildTerrainMesh, getBlock, setBlock } from './terrain.js?v=17';
-import { audioState, playSound, soundtrack, toggleSoundtrack, setSoundtrackVolume } from './audio.js?v=17';
-import { spawnTanks, applyGravityToTanks } from './tank.js?v=17';
-import { setupInput, startCharging, fireProjectile } from './input.js?v=17';
-import { updateWindUI, setPhase, selectTank, nextTurn, updateUI, highlightPossibleMoves } from './ui.js?v=17';
+import { GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, BLOCK_SIZE } from './constants.js?v=21';
+import { state, tanks, projectiles, particles } from './state.js?v=21';
+import { generateTerrain, buildTerrainMesh, getBlock, setBlock } from './terrain.js?v=21';
+import { audioState, playSound, soundtrack, toggleSoundtrack, setSoundtrackVolume } from './audio.js?v=21';
+import { spawnTanks, applyGravityToTanks } from './tank.js?v=21';
+import { setupInput, startCharging, fireProjectile } from './input.js?v=21';
+import { updateWindUI, setPhase, selectTank, nextTurn, updateUI, highlightPossibleMoves, setupMultiplayerUI } from './ui.js?v=21';
+import { syncActiveTankState, syncNextTurn } from './multiplayer.js?v=21';
 
 let clock = new THREE.Clock();
 
@@ -49,6 +50,7 @@ function initThree() {
     dirLight.shadow.camera.right = d;
     dirLight.shadow.camera.top = d;
     dirLight.shadow.camera.bottom = -d;
+    dirLight.shadow.bias = -0.0005;
     state.scene.add(dirLight);
 
     const fillLight = new THREE.DirectionalLight(0x06b6d4, 0.6);
@@ -81,10 +83,12 @@ function initThree() {
     const trajGeom = new THREE.BufferGeometry();
     const trajMat = new THREE.PointsMaterial({
         color: 0x38bdf8,
-        size: 0.35,
+        size: 1.8,
         transparent: true,
-        opacity: 0.8,
-        blending: THREE.AdditiveBlending
+        opacity: 0.9,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        depthTest: false
     });
     state.trajectoryMesh = new THREE.Points(trajGeom, trajMat);
     state.trajectoryMesh.frustumCulled = false;
@@ -252,6 +256,7 @@ function updateTrajectoryPreview() {
 }
 
 function handleTankAiming(dt) {
+    if (state.isMultiplayer && state.activePlayer !== state.localPlayerRole) return;
     if (!state.selectedTank || state.currentPhase !== 'AIM' || projectiles.length > 0 || state.isGameOver) return;
 
     const rotSpeed = 1.3; 
@@ -277,10 +282,14 @@ function handleTankAiming(dt) {
 
     if (changed) {
         state.selectedTank.updateMeshPosition();
+        if (state.isMultiplayer) {
+            syncActiveTankState();
+        }
     }
 }
 
 function handleTankMovement(dt) {
+    if (state.isMultiplayer && state.activePlayer !== state.localPlayerRole) return;
     if (!state.selectedTank || state.currentPhase !== 'MOVE' || state.isGameOver) return;
 
     const rotSpeed = 2.0; 
@@ -298,6 +307,9 @@ function handleTankMovement(dt) {
     if (changed) {
         state.selectedTank.updateMeshPosition();
         highlightPossibleMoves();
+        if (state.isMultiplayer) {
+            syncActiveTankState();
+        }
     }
 }
 
@@ -517,7 +529,12 @@ function setupUIEventListeners() {
     if (btnSkipTurn) {
         btnSkipTurn.addEventListener('click', () => {
             playSound('click');
-            nextTurn();
+            if (state.isMultiplayer) {
+                const nextRole = state.activePlayer === 1 ? 2 : 1;
+                syncNextTurn(nextRole);
+            } else {
+                nextTurn();
+            }
         });
     }
 
@@ -604,6 +621,9 @@ function setupUIEventListeners() {
             }
         });
     });
+
+    // Initialize multiplayer UI panels & matchmaking controls
+    setupMultiplayerUI();
 }
 
 function startApp() {

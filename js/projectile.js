@@ -1,22 +1,31 @@
 // Projectile logic, movement, and terrain destruction
-import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, PALETTE } from './constants.js?v=17';
-import { state, projectiles, tanks } from './state.js?v=17';
-import { getBlock, setBlock, buildTerrainMesh, getSurfaceY } from './terrain.js?v=17';
-import { playSound } from './audio.js?v=17';
-import { spawnExplosion, spawnDebrisParticle, spawnTrailParticle } from './particles.js?v=17';
-import { applyGravityToTanks } from './tank.js?v=17';
-import { nextTurn, showAnnouncement, deployShield } from './ui.js?v=17';
+import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, PALETTE } from './constants.js?v=21';
+import { state, projectiles, tanks } from './state.js?v=21';
+import { getBlock, setBlock, buildTerrainMesh, getSurfaceY } from './terrain.js?v=21';
+import { playSound } from './audio.js?v=21';
+import { spawnExplosion, spawnDebrisParticle, spawnTrailParticle } from './particles.js?v=21';
+import { applyGravityToTanks } from './tank.js?v=21';
+import { nextTurn, showAnnouncement, deployShield } from './ui.js?v=21';
+import { syncBlockChanges } from './multiplayer.js?v=21';
 
 export class Projectile {
-    constructor(startX, startY, startZ, velocity, shooterTank) {
+    constructor(startX, startY, startZ, velocity, shooterTankOrMode, optionalTank = null) {
         this.x = startX;
         this.y = startY;
         this.z = startZ;
         this.vx = velocity.x;
         this.vy = velocity.y;
         this.vz = velocity.z;
-        this.shooter = shooterTank;
-        this.mode = state.shotMode;
+        
+        if (typeof shooterTankOrMode === 'string') {
+            this.mode = shooterTankOrMode;
+            this.shooter = optionalTank;
+        } else {
+            this.shooter = shooterTankOrMode;
+            this.mode = state.shotMode;
+        }
+        
+        this.isRemoteSimulation = false;
         
         // Save initial parameters for trajectory preview during flight
         this.startX = startX;
@@ -29,7 +38,7 @@ export class Projectile {
         const isAddMode = this.mode === 'add';
         const isWallMode = this.mode === 'wall';
         const isShieldMode = this.mode === 'shield';
-        const shooterId = shooterTank ? shooterTank.player : state.activePlayer;
+        const shooterId = this.shooter ? this.shooter.player : state.activePlayer;
         const playerColor = (shooterId === 1) ? 0x10b981 : 0xf43f5e;
         const projColor = isAddMode ? 0x10b981 : (isWallMode ? playerColor : (isShieldMode ? playerColor : 0x38bdf8));
         const lightColor = isAddMode ? 0x10b981 : (isWallMode ? playerColor : (isShieldMode ? playerColor : 0x06b6d4));
@@ -132,9 +141,21 @@ export class Projectile {
         const idx = projectiles.indexOf(this);
         if (idx > -1) projectiles.splice(idx, 1);
         
+        if (this.isRemoteSimulation) {
+            return;
+        }
+
         setTimeout(() => {
             applyGravityToTanks();
-            nextTurn();
+            
+            if (state.isMultiplayer) {
+                const nextRole = (state.localPlayerRole === 1) ? 2 : 1;
+                import('./multiplayer.js?v=21').then(mp => {
+                    mp.syncNextTurn(nextRole);
+                });
+            } else {
+                nextTurn();
+            }
         }, 800);
     }
 
@@ -144,6 +165,22 @@ export class Projectile {
         const gz = Math.round(ez / BLOCK_SIZE);
         
         console.log("Projectile explode. Shot Mode:", this.mode, "Impact Voxel:", gx, gy, gz);
+
+        // If this is a remote simulation, we skip all block and damage mutations.
+        // These changes are handled directly by the Firebase database listeners.
+        if (this.isRemoteSimulation) {
+            if (this.mode === 'add') {
+                spawnExplosion(new THREE.Vector3(ex, ey, ez), 0x10b981, 35);
+            } else if (this.mode === 'wall') {
+                spawnExplosion(new THREE.Vector3(ex, ey, ez), 0x8b5cf6, 35);
+            } else if (this.mode === 'shield') {
+                // Instantiation handled by shotLaunch listener
+            } else {
+                spawnExplosion(new THREE.Vector3(ex, ey, ez), 0x38bdf8, 30);
+            }
+            this.destroy();
+            return;
+        }
 
         if (this.mode === 'shield') {
             deployShield(ex, ey, ez, this.shooter ? this.shooter.player : state.activePlayer);
@@ -201,6 +238,17 @@ export class Projectile {
                 });
             });
 
+            if (state.isMultiplayer) {
+                const syncedBlocks = blocksToPlace.map(b => ({
+                    x: b.x,
+                    y: b.y,
+                    z: b.z,
+                    type: blockType,
+                    delay: Math.round(b.dist * 80)
+                }));
+                syncBlockChanges(syncedBlocks, [], 'add_deploy');
+            }
+
             spawnExplosion(new THREE.Vector3(ex, ey, ez), 0x10b981, 35);
             this.destroy();
             return;
@@ -241,10 +289,8 @@ export class Projectile {
                     for (let dy = 0; dy < wallHeight; dy++) {
                         const ty = startY + dy;
                         if (ty < GRID_SIZE_Y) {
-                            wallCoords.push({ x: tx, y: ty, z: tz });
-                            
-                            const colDist = Math.abs(i);
-                            const delay = colDist * 50 + dy * 15; // Outward sweeping + rising delay
+                            const delay = Math.round(Math.abs(i) * 50 + dy * 15);
+                            wallCoords.push({ x: tx, y: ty, z: tz, delay: delay });
                             
                             state.pendingBlocks.push({
                                 x: tx,
@@ -264,18 +310,37 @@ export class Projectile {
             }
             if (state.playerWalls[playerId].length >= 3) {
                 const oldestWall = state.playerWalls[playerId].shift();
+                
+                let clearedBlocks = [];
                 oldestWall.forEach(coord => {
                     // Only clear it if it's still a wall block
                     const blockVal = getBlock(coord.x, coord.y, coord.z);
                     if (blockVal === 7 || blockVal === 8) {
                         setBlock(coord.x, coord.y, coord.z, 0);
+                        clearedBlocks.push({ x: coord.x, y: coord.y, z: coord.z, type: 0, delay: 0 });
                     }
                 });
                 buildTerrainMesh();
                 applyGravityToTanks();
                 showAnnouncement(`Spieler ${playerId}: Älteste Wand entfernt (max. 3 Wände)!`);
+
+                if (state.isMultiplayer && clearedBlocks.length > 0) {
+                    // We must also sync the block clears
+                    syncBlockChanges(clearedBlocks, [], null);
+                }
             }
             state.playerWalls[playerId].push(wallCoords);
+
+            if (state.isMultiplayer) {
+                const syncedBlocks = wallCoords.map(c => ({
+                    x: c.x,
+                    y: c.y,
+                    z: c.z,
+                    type: blockType,
+                    delay: c.delay
+                }));
+                syncBlockChanges(syncedBlocks, [], 'wall_deploy');
+            }
 
             spawnExplosion(new THREE.Vector3(ex, ey, ez), 0x8b5cf6, 35);
             this.destroy();
@@ -283,10 +348,10 @@ export class Projectile {
         }
 
         playSound('explosion');
-        
         state.screenShakeIntensity = 1.3;
 
         const destroyRadius = 2.8;
+        const blocksChanged = [];
 
         for (let dx = -3; dx <= 3; dx++) {
             for (let dy = -3; dy <= 3; dy++) {
@@ -302,15 +367,18 @@ export class Projectile {
                             spawnDebrisParticle(tx * BLOCK_SIZE, ty * BLOCK_SIZE, tz * BLOCK_SIZE, PALETTE[type]);
                             
                             if (type === 7 || type === 8) {
-                                // Wall block is particularly hard: it has a high chance (70%) to downgrade to burnt ash (type 6) or resist, instead of being destroyed
+                                // Wall block is particularly hard
                                 if (Math.random() < 0.7) {
                                     setBlock(tx, ty, tz, 6);
+                                    blocksChanged.push({ x: tx, y: ty, z: tz, type: 6 });
                                 }
                             } else {
                                 if (dist > destroyRadius - 0.7 && Math.random() < 0.6) {
                                     setBlock(tx, ty, tz, 6); 
+                                    blocksChanged.push({ x: tx, y: ty, z: tz, type: 6 });
                                 } else {
                                     setBlock(tx, ty, tz, 0); 
+                                    blocksChanged.push({ x: tx, y: ty, z: tz, type: 0 });
                                 }
                             }
                         }
@@ -321,6 +389,7 @@ export class Projectile {
 
         buildTerrainMesh();
 
+        const damageList = [];
         tanks.forEach(tank => {
             const tankWorldPos = new THREE.Vector3(tank.x * BLOCK_SIZE, (tank.y - 0.5) * BLOCK_SIZE, tank.z * BLOCK_SIZE);
             
@@ -349,9 +418,14 @@ export class Projectile {
                 if (damage > 0) {
                     tank.takeDamage(damage);
                     showAnnouncement(`${tank.name} nimmt ${damage} Schaden!`);
+                    damageList.push({ id: tank.id, hp: tank.hp });
                 }
             }
         });
+
+        if (state.isMultiplayer) {
+            syncBlockChanges(blocksChanged, damageList, 'explosion');
+        }
 
         spawnExplosion(new THREE.Vector3(ex, ey, ez), 0x38bdf8, 30); 
         this.destroy();

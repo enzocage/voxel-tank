@@ -21,6 +21,19 @@ export const state = {
     shieldCharges: { 1: 1, 2: 1 }, // Each player gets exactly 1 shield deployment per game
     pendingBlocks: [], // Queued voxel placements { x, y, z, blockType, targetTime }
     
+    // Multiplayer State
+    isMultiplayer: false,
+    localPlayerRole: null, // 1 for Player 1, 2 for Player 2
+    lobbyId: null,
+    opponentName: "",
+    multiplayerStatus: "offline", // 'offline', 'waiting', 'playing', 'disconnected'
+    playerUid: null,
+    playerName: "Gast",
+    playerWins: 0,
+    playerLosses: 0,
+    isHost: false,
+    terrainSeed: null,
+    
     windDirection: Math.random() * Math.PI * 2,
     windSpeed: Math.floor(Math.random() * 8),
     

@@ -114,3 +114,61 @@ canvas {
 .panel-collapsible.collapsed .panel-toggle-btn i {
     transform: rotate(180deg);
 }
+
+/* Custom styles for authentication and matchmaking inputs/buttons */
+.cyber-input {
+    background: rgba(15, 23, 42, 0.7) !important;
+    border: 1px solid rgba(99, 102, 241, 0.25) !important;
+    color: #f1f5f9 !important;
+    font-family: 'Share Tech Mono', monospace;
+    transition: all 0.25s ease;
+}
+.cyber-input:focus {
+    border-color: rgba(99, 102, 241, 0.7) !important;
+    box-shadow: 0 0 8px rgba(99, 102, 241, 0.3);
+    outline: none;
+}
+.btn-cyber-primary {
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.75), rgba(99, 102, 241, 0.75));
+    border: 1px solid rgba(129, 140, 248, 0.3);
+    color: #f1f5f9;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    transition: all 0.25s ease;
+    cursor: pointer;
+}
+.btn-cyber-primary:hover {
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.95), rgba(99, 102, 241, 0.95));
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);
+    transform: translateY(-1px);
+}
+.btn-cyber-primary:active {
+    transform: translateY(1px);
+}
+.btn-cyber-secondary {
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    color: #cbd5e1;
+    font-family: 'Orbitron', sans-serif;
+    transition: all 0.25s ease;
+    cursor: pointer;
+}
+.btn-cyber-secondary:hover {
+    background: rgba(30, 41, 59, 0.6);
+    border-color: rgba(148, 163, 184, 0.4);
+    color: #f1f5f9;
+}
+.btn-cyber-accent {
+    background: linear-gradient(135deg, rgba(244, 63, 94, 0.75), rgba(225, 29, 72, 0.75));
+    border: 1px solid rgba(251, 113, 133, 0.3);
+    color: #f1f5f9;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    transition: all 0.25s ease;
+    cursor: pointer;
+}
+.btn-cyber-accent:hover {
+    background: linear-gradient(135deg, rgba(244, 63, 94, 0.95), rgba(225, 29, 72, 0.95));
+    box-shadow: 0 0 12px rgba(244, 63, 94, 0.4);
+}
+
