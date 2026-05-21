@@ -1,5 +1,5 @@
 // Particle systems (dust, sparks, explosions, trails)
-import { state, particles } from './state.js?v=6';
+import { state, particles } from './state.js?v=13';
 
 export class Particle {
     constructor(x, y, z, color, size, velocity, life) {
@@ -97,5 +97,24 @@ export function spawnExplosion(pos, color, count) {
 
         const particleColor = Math.random() < 0.5 ? color : 0xf59e0b; 
         particles.push(new Particle(pos.x, pos.y, pos.z, particleColor, size, velocity, life));
+    }
+}
+
+export function spawnHitParticles(x, y, z, color) {
+    // 1. Spawns standard debris/damage particles
+    spawnDamageParticles(x, y, z, color);
+    
+    // 2. Add some high-energy glowing sparks (white, gold/orange, and neon player color)
+    const colors = [0xffffff, 0xffb703, color];
+    for (let i = 0; i < 20; i++) {
+        const size = 0.08 + Math.random() * 0.12;
+        const life = 0.4 + Math.random() * 0.4;
+        const sparkColor = colors[Math.floor(Math.random() * colors.length)];
+        const velocity = {
+            x: (Math.random() - 0.5) * 12,
+            y: (Math.random() * 9) + 4,
+            z: (Math.random() - 0.5) * 12
+        };
+        particles.push(new Particle(x, y, z, sparkColor, size, velocity, life));
     }
 }

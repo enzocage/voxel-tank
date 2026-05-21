@@ -1,11 +1,11 @@
 // Main Three.js setup, environment generation, and game loop
-import { GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, BLOCK_SIZE } from './constants.js?v=6';
-import { state, tanks, projectiles, particles } from './state.js?v=6';
-import { generateTerrain, buildTerrainMesh, getBlock } from './terrain.js?v=6';
-import { audioState, playSound, soundtrack, toggleSoundtrack, setSoundtrackVolume } from './audio.js?v=6';
-import { spawnTanks } from './tank.js?v=6';
-import { setupInput, startCharging, fireProjectile } from './input.js?v=6';
-import { updateWindUI, setPhase, selectTank, nextTurn, updateUI, highlightPossibleMoves } from './ui.js?v=6';
+import { GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, BLOCK_SIZE } from './constants.js?v=13';
+import { state, tanks, projectiles, particles } from './state.js?v=13';
+import { generateTerrain, buildTerrainMesh, getBlock } from './terrain.js?v=13';
+import { audioState, playSound, soundtrack, toggleSoundtrack, setSoundtrackVolume } from './audio.js?v=13';
+import { spawnTanks } from './tank.js?v=13';
+import { setupInput, startCharging, fireProjectile } from './input.js?v=13';
+import { updateWindUI, setPhase, selectTank, nextTurn, updateUI, highlightPossibleMoves } from './ui.js?v=13';
 
 let clock = new THREE.Clock();
 
@@ -145,7 +145,11 @@ function updateTrajectoryPreview() {
     }
 
     if (state.trajectoryMesh && state.trajectoryMesh.material) {
-        state.trajectoryMesh.material.color.setHex(state.shotMode === 'add' ? 0x10b981 : 0x38bdf8);
+        let col = 0x38bdf8;
+        if (state.shotMode === 'add') col = 0x10b981;
+        else if (state.shotMode === 'wall') col = 0x8b5cf6;
+        else if (state.shotMode === 'shield') col = 0x00f3ff;
+        state.trajectoryMesh.material.color.setHex(col);
     }
 
     const yaw = state.selectedTank.bodyYaw + state.selectedTank.turretYaw;
@@ -294,6 +298,20 @@ function animate() {
         }
     });
 
+    if (state.activeShields) {
+        state.activeShields.forEach(shield => {
+            const time = performance.now();
+            if (shield.mesh && shield.mesh.material) {
+                shield.mesh.material.opacity = 0.2 + 0.08 * Math.sin(time * 0.003);
+                const scaleScalar = 1 + 0.02 * Math.sin(time * 0.002);
+                shield.mesh.scale.set(scaleScalar, scaleScalar, scaleScalar);
+            }
+            if (shield.textSprite) {
+                shield.textSprite.quaternion.copy(state.camera.quaternion);
+            }
+        });
+    }
+
     if (state.starfield) {
         state.starfield.rotation.y += 0.0001; 
         state.starfield.material.opacity = 0.65 + Math.sin(performance.now() * 0.0012) * 0.25;
@@ -389,10 +407,26 @@ function setupUIEventListeners() {
                 state.shotMode = 'add';
                 btnToggleMode.innerText = 'ADD';
                 btnToggleMode.className = "flex-shrink-0 cyber-font text-[8px] font-bold py-1.5 px-3 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-emerald-950/40 text-emerald-400 border-emerald-500/30 hover:bg-emerald-900/40 hover:border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)]";
+            } else if (state.shotMode === 'add') {
+                state.shotMode = 'wall';
+                btnToggleMode.innerText = 'WALL';
+                btnToggleMode.className = "flex-shrink-0 cyber-font text-[8px] font-bold py-1.5 px-3 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-violet-950/40 text-violet-400 border-violet-500/30 hover:bg-violet-900/40 hover:border-violet-500/50 shadow-[0_0_8px_rgba(139,92,246,0.3)]";
+            } else if (state.shotMode === 'wall') {
+                if (!state.shieldCharges) state.shieldCharges = { 1: 1, 2: 1 };
+                const charge = state.shieldCharges[state.activePlayer];
+                if (charge > 0) {
+                    state.shotMode = 'shield';
+                    btnToggleMode.innerText = 'SHIELD';
+                    btnToggleMode.className = "flex-shrink-0 cyber-font text-[8px] font-bold py-1.5 px-3 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-cyan-950/40 text-cyan-400 border-cyan-500/30 hover:bg-cyan-900/40 hover:border-cyan-500/50 shadow-[0_0_8px_rgba(6,182,212,0.3)]";
+                } else {
+                    state.shotMode = 'sub';
+                    btnToggleMode.innerText = 'SUB';
+                    btnToggleMode.className = "flex-shrink-0 cyber-font text-[8px] font-bold py-1.5 px-3 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-rose-950/40 text-rose-400 border-rose-500/30 hover:bg-rose-900/40 hover:border-rose-500/50 shadow-[0_0_8px_rgba(244,63,94,0.2)]";
+                }
             } else {
                 state.shotMode = 'sub';
                 btnToggleMode.innerText = 'SUB';
-                btnToggleMode.className = "flex-shrink-0 cyber-font text-[8px] font-bold py-1.5 px-3 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-rose-950/40 text-rose-400 border-rose-500/30 hover:bg-rose-900/40 hover:border-rose-500/50";
+                btnToggleMode.className = "flex-shrink-0 cyber-font text-[8px] font-bold py-1.5 px-3 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-rose-950/40 text-rose-400 border-rose-500/30 hover:bg-rose-900/40 hover:border-rose-500/50 shadow-[0_0_8px_rgba(244,63,94,0.2)]";
             }
             console.log("Toggle mode button clicked. New shotMode:", state.shotMode);
         });
@@ -428,15 +462,20 @@ function setupUIEventListeners() {
             if (intro) {
                 intro.classList.add('opacity-0', 'pointer-events-none');
             }
-            
-            toggleSoundtrack();
-            if (playBtn) {
-                const playIcon = playBtn.querySelector('i');
-                if (playIcon) playIcon.className = "fa-solid fa-pause text-[8px]";
-                playBtn.classList.remove('animate-pulse');
-            }
         });
     }
+
+    // Toggleable/Collapsible Panels
+    document.querySelectorAll('.panel-toggle-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const panel = btn.closest('.panel-collapsible');
+            if (panel) {
+                panel.classList.toggle('collapsed');
+                playSound('click');
+            }
+        });
+    });
 }
 
 function startApp() {

@@ -1,9 +1,9 @@
 // Keyboard, Mouse, and Touch input handling
-import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js?v=6';
-import { state, tanks, projectiles } from './state.js?v=6';
-import { getSurfaceY } from './terrain.js?v=6';
-import { playSound } from './audio.js?v=6';
-import { Projectile } from './projectile.js?v=6';
+import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js?v=13';
+import { state, tanks, projectiles } from './state.js?v=13';
+import { getSurfaceY } from './terrain.js?v=13';
+import { playSound } from './audio.js?v=13';
+import { Projectile } from './projectile.js?v=13';
 import { 
     setPhase, 
     selectTank, 
@@ -11,7 +11,7 @@ import {
     highlightPossibleMoves, 
     clearHighlights,
     adjustCameraFocusOnTank
-} from './ui.js?v=6';
+} from './ui.js?v=13';
 
 export function attemptStep(dx, dz) {
     if (!state.selectedTank || state.actionsRemaining <= 0) return;
@@ -164,6 +164,12 @@ export function setupInput() {
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
+    let clickStartX = 0;
+    let clickStartY = 0;
+    let clickStartTime = 0;
+    let lastClickTime = 0;
+    let lastClickedTankId = null;
+
     function handleSelectClick(clientX, clientY) {
         mouse.x = (clientX / window.innerWidth) * 2 - 1;
         mouse.y = -(clientY / window.innerHeight) * 2 + 1;
@@ -186,34 +192,56 @@ export function setupInput() {
         }
 
         if (clickedTank && clickedTank.player === state.activePlayer) {
+            const currentTime = Date.now();
+            const timeDiff = currentTime - lastClickTime;
+
+            if (clickedTank === state.selectedTank && state.currentPhase === 'MOVE' && timeDiff < 350 && lastClickedTankId === clickedTank.id) {
+                // Double click/tap on the currently selected tank in MOVE phase: transition to AIM phase!
+                playSound('click');
+                setPhase('AIM');
+                lastClickTime = 0;
+                lastClickedTankId = null;
+                return;
+            }
+
+            lastClickTime = currentTime;
+            lastClickedTankId = clickedTank.id;
+
             playSound('click');
             if (state.currentPhase === 'SELECT') {
                 selectTank(clickedTank);
                 setPhase('MOVE');
+                // Reset double click detection on phase transition to avoid accidental skip
+                lastClickTime = 0;
+                lastClickedTankId = null;
             } else {
                 selectTank(clickedTank);
             }
         }
     }
 
-    window.addEventListener('mousedown', (e) => {
-        if (e.target.tagName === 'BUTTON' || e.target.closest('#ui-container') || e.target.closest('button')) {
-            return;
+    function onPointerDown(e) {
+        if (e.button !== undefined && e.button !== 0) return;
+        
+        clickStartX = e.clientX;
+        clickStartY = e.clientY;
+        clickStartTime = Date.now();
+    }
+
+    function onPointerUp(e) {
+        if (e.button !== undefined && e.button !== 0) return;
+
+        const dist = Math.sqrt(Math.pow(e.clientX - clickStartX, 2) + Math.pow(e.clientY - clickStartY, 2));
+        const duration = Date.now() - clickStartTime;
+
+        // If pointer moved very little and click duration was short, treat it as a select click/tap
+        if (dist < 8 && duration < 350) {
+            handleSelectClick(e.clientX, e.clientY);
         }
+    }
 
-        if (e.button !== 0) return; 
-
-        handleSelectClick(e.clientX, e.clientY);
-    });
-
-    window.addEventListener('touchstart', (e) => {
-        if (e.target.tagName === 'BUTTON' || e.target.closest('#ui-container') || e.target.closest('button')) {
-            return;
-        }
-
-        if (e.touches.length > 0) {
-            const touch = e.touches[0];
-            handleSelectClick(touch.clientX, touch.clientY);
-        }
-    });
+    if (state.renderer && state.renderer.domElement) {
+        state.renderer.domElement.addEventListener('pointerdown', onPointerDown);
+        state.renderer.domElement.addEventListener('pointerup', onPointerUp);
+    }
 }

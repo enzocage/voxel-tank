@@ -11,6 +11,7 @@ export const PALETTE = {
     4: 0x10b981, // Lebendige Energiekristalle (Smaragd)
     5: 0x3b82f6, // Neon-Energieknoten
     6: 0x0f172a, // Verbranntes Aschegestein (Schwarz)
+    7: 0x8b5cf6, // Gehärteter Schutzschild (Violett)
 };
 
 export function getCardinalDirectionFromYaw(yaw, isForward = true) {

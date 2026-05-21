@@ -24,49 +24,64 @@
         <div class="flex flex-row justify-between items-start w-full gap-2 pointer-events-auto">
             
             <!-- P1 Status-Card (Neon Green) -->
-            <div id="player1-card" class="cyber-panel neon-glow-p1 rounded-lg p-2.5 w-44 md:w-52 transition-all duration-300">
+            <div id="player1-card" class="cyber-panel neon-glow-p1 rounded-lg p-2.5 w-44 md:w-52 transition-all duration-300 panel-collapsible">
                 <div class="flex items-center justify-between mb-1.5">
                     <span class="cyber-font text-[9px] font-bold text-emerald-400 tracking-wider flex items-center gap-1">
                         <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping"></span> SPIELER 1
                     </span>
-                    <span id="p1-tanks-count" class="tech-font text-xs text-emerald-300 font-bold">5/5 Panzer</span>
+                    <div class="flex items-center gap-1.5">
+                        <span id="p1-tanks-count" class="tech-font text-xs text-emerald-300 font-bold">5/5 Panzer</span>
+                        <button class="panel-toggle-btn text-slate-500 hover:text-emerald-400 transition-colors pointer-events-auto cursor-pointer" title="Minimieren/Maximieren">
+                            <i class="fa-solid fa-chevron-up text-[8px]"></i>
+                        </button>
+                    </div>
                 </div>
-                <div class="space-y-1" id="p1-tanks-list">
+                <div class="panel-content space-y-1" id="p1-tanks-list">
                     <!-- Wird dynamisch befüllt -->
                 </div>
             </div>
 
-            <!-- Zentrale Runden-Anzeige mit Phasen-Status -->
-            <div class="flex flex-col items-center gap-1.5">
-                <div class="cyber-panel border-indigo-500/30 rounded-xl px-4 py-1.5 shadow-md text-center min-w-[200px]">
-                    <span class="text-[8px] uppercase tracking-[0.2em] text-indigo-400 font-black block mb-0.5">Runde</span>
-                    <div id="turn-display" class="cyber-font text-[10px] font-bold text-emerald-400">SPIELER 1 AM ZUG</div>
+            <!-- Zentrale Runden-Anzeige mit Phasen-Status & Wind -->
+            <div id="center-info-panel" class="cyber-panel border-indigo-500/30 rounded-xl px-3.5 py-1.5 shadow-md text-center min-w-[200px] panel-collapsible">
+                <div class="flex items-center justify-between gap-2 w-full">
+                    <span class="text-[8px] uppercase tracking-[0.2em] text-indigo-400 font-black block">INFO-ZENTRALE</span>
+                    <button class="panel-toggle-btn text-slate-500 hover:text-indigo-400 transition-colors pointer-events-auto cursor-pointer" title="Minimieren/Maximieren">
+                        <i class="fa-solid fa-chevron-up text-[8px]"></i>
+                    </button>
+                </div>
+                <div class="panel-content flex flex-col items-center">
+                    <div id="turn-display" class="cyber-font text-[10px] font-bold text-emerald-400 mt-1">SPIELER 1 AM ZUG</div>
                     <!-- Phasen-Anzeige -->
                     <div id="phase-badge" class="cyber-font text-[10px] text-amber-400 font-bold mt-1 px-2 py-0.5 bg-amber-950/40 rounded-full border border-amber-500/30 inline-block uppercase tracking-wider">
                         Phase 1: Panzer wählen
                     </div>
                     <div id="turn-timer" class="tech-font text-[10px] text-slate-300 mt-1">Aktionen: <span id="actions-left" class="text-indigo-400 font-extrabold">15 AP</span></div>
-                </div>
-
-                <!-- Windanzeige -->
-                <div class="cyber-panel border-slate-800 rounded-lg px-2.5 py-1 flex items-center gap-2 shadow-sm">
-                    <span class="tech-font text-[9px] text-slate-400">WIND:</span>
-                    <div class="relative w-4 h-4 flex items-center justify-center">
-                        <i id="wind-arrow" class="fa-solid fa-arrow-up text-indigo-400 transition-transform duration-500 text-xs"></i>
+                    
+                    <!-- Windanzeige -->
+                    <div class="border-t border-slate-800/60 mt-1.5 pt-1.5 flex items-center justify-center gap-2 w-full">
+                        <span class="tech-font text-[9px] text-slate-400">WIND:</span>
+                        <div class="relative w-4 h-4 flex items-center justify-center">
+                            <i id="wind-arrow" class="fa-solid fa-arrow-up text-indigo-400 transition-transform duration-500 text-xs"></i>
+                        </div>
+                        <span id="wind-strength-label" class="tech-font text-[9px] font-bold text-indigo-300">0 m/s</span>
                     </div>
-                    <span id="wind-strength-label" class="tech-font text-[9px] font-bold text-indigo-300">0 m/s</span>
                 </div>
             </div>
 
             <!-- P2 Status-Card (Neon Pink) -->
-            <div id="player2-card" class="cyber-panel neon-glow-p2 rounded-lg p-2.5 w-44 md:w-52 transition-all duration-300">
+            <div id="player2-card" class="cyber-panel neon-glow-p2 rounded-lg p-2.5 w-44 md:w-52 transition-all duration-300 panel-collapsible">
                 <div class="flex items-center justify-between mb-1.5">
                     <span class="cyber-font text-[9px] font-bold text-rose-400 tracking-wider flex items-center gap-1">
                         <span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span> SPIELER 2
                     </span>
-                    <span id="p2-tanks-count" class="tech-font text-xs text-rose-300 font-bold">5/5 Panzer</span>
+                    <div class="flex items-center gap-1.5">
+                        <span id="p2-tanks-count" class="tech-font text-xs text-rose-300 font-bold">5/5 Panzer</span>
+                        <button class="panel-toggle-btn text-slate-500 hover:text-rose-400 transition-colors pointer-events-auto cursor-pointer" title="Minimieren/Maximieren">
+                            <i class="fa-solid fa-chevron-up text-[8px]"></i>
+                        </button>
+                    </div>
                 </div>
-                <div class="space-y-1" id="p2-tanks-list">
+                <div class="panel-content space-y-1" id="p2-tanks-list">
                     <!-- Wird dynamisch befüllt -->
                 </div>
             </div>
@@ -91,78 +106,96 @@
 
         <!-- Footer: Steuerung, Schussbalken und Aktions-Optionen -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 w-full items-end pointer-events-auto">
-            
             <!-- Linke Steuerungsinfos & Musik -->
-            <div class="cyber-panel rounded-lg p-2.5 shadow-md max-w-[260px] w-full">
+            <div id="left-control-panel" class="cyber-panel rounded-lg p-2.5 shadow-md max-w-[260px] w-full panel-collapsible">
                 <div class="flex justify-between items-center mb-1">
                     <h3 class="cyber-font text-[8px] font-bold text-indigo-400 tracking-wider">AKTUELLE STEUERUNG</h3>
-                    <!-- Ton-Optionen -->
-                    <div class="flex gap-1.5">
-                        <button id="btn-toggle-sfx" class="text-[9px] text-slate-400 hover:text-indigo-400 p-0.5" title="Effekte an/aus">
+                    <!-- Ton-Optionen & Collapse -->
+                    <div class="flex gap-2 items-center">
+                        <button id="btn-toggle-sfx" class="text-[9px] text-slate-400 hover:text-indigo-400 p-0.5 cursor-pointer" title="Effekte an/aus">
                             <i class="fa-solid fa-volume-high"></i>
+                        </button>
+                        <button class="panel-toggle-btn text-slate-500 hover:text-indigo-400 transition-colors pointer-events-auto cursor-pointer" title="Minimieren/Maximieren">
+                            <i class="fa-solid fa-chevron-up text-[8px]"></i>
                         </button>
                     </div>
                 </div>
-                <!-- Dynamischer Hilfe-Text je nach Phase -->
-                <div id="controls-help-text" class="space-y-0.5 text-[9px] text-slate-400 tech-font hidden md:block">
-                    <!-- Wird per JS befüllt -->
-                </div>
-                
-                <!-- Soundtrack Player -->
-                <div class="border-t border-slate-800 pt-1.5 mt-1.5">
-                    <div class="flex items-center justify-between gap-1">
-                        <div class="flex items-center gap-1">
-                            <button id="btn-play-soundtrack" class="h-5 w-5 rounded bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center cursor-pointer transition-colors shadow-sm animate-pulse" title="Soundtrack abspielen">
-                                <i class="fa-solid fa-play text-[8px]"></i>
-                            </button>
-                            <span class="cyber-font text-[8px] text-slate-400 font-bold uppercase truncate max-w-[85px]" title="C64 Remix: Lightforce">Lightforce</span>
-                        </div>
-                        <div class="flex items-center gap-1 w-20">
-                            <i class="fa-solid fa-volume-low text-[8px] text-slate-500"></i>
-                            <input type="range" id="slider-soundtrack-vol" min="0" max="1" step="0.05" value="0.1" class="w-full h-0.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                <div class="panel-content">
+                    <!-- Dynamischer Hilfe-Text je nach Phase -->
+                    <div id="controls-help-text" class="space-y-0.5 text-[9px] text-slate-400 tech-font hidden md:block">
+                        <!-- Wird per JS befüllt -->
+                    </div>
+                    
+                    <!-- Soundtrack Player -->
+                    <div class="border-t border-slate-800 pt-1.5 mt-1.5">
+                        <div class="flex items-center justify-between gap-1">
+                            <div class="flex items-center gap-1">
+                                <button id="btn-play-soundtrack" class="h-5 w-5 rounded bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center cursor-pointer transition-colors shadow-sm animate-pulse" title="Soundtrack abspielen">
+                                    <i class="fa-solid fa-play text-[8px]"></i>
+                                </button>
+                                <span class="cyber-font text-[8px] text-slate-400 font-bold uppercase truncate max-w-[85px]" title="C64 Remix: Lightforce">Lightforce</span>
+                            </div>
+                            <div class="flex items-center gap-1 w-20">
+                                <i class="fa-solid fa-volume-low text-[8px] text-slate-500"></i>
+                                <input type="range" id="slider-soundtrack-vol" min="0" max="1" step="0.05" value="0.1" class="w-full h-0.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Mitte: Schusskraftanzeige & Schuss-Button -->
-            <div id="shooting-control-panel" class="flex flex-col items-center cyber-panel rounded-xl p-2.5 shadow-md max-w-xs mx-auto w-full opacity-50 transition-opacity duration-300">
-                <div class="flex justify-between w-full mb-0.5">
+            <div id="shooting-control-panel" class="flex flex-col items-center cyber-panel rounded-xl p-2.5 shadow-md max-w-xs mx-auto w-full opacity-50 transition-opacity duration-300 panel-collapsible">
+                <div class="flex justify-between w-full mb-0.5 items-center">
                     <span class="cyber-font text-[8px] font-bold text-amber-400 tracking-wider">REAKTOR-LADEDRUCK</span>
-                    <span id="power-percentage" class="tech-font text-xs text-amber-400 font-bold">0%</span>
+                    <div class="flex items-center gap-2">
+                        <span id="power-percentage" class="tech-font text-xs text-amber-400 font-bold">0%</span>
+                        <button class="panel-toggle-btn text-slate-500 hover:text-indigo-400 transition-colors pointer-events-auto cursor-pointer" title="Minimieren/Maximieren">
+                            <i class="fa-solid fa-chevron-up text-[8px]"></i>
+                        </button>
+                    </div>
                 </div>
-                <!-- Power-Balken -->
-                <div class="w-full bg-slate-950/50 rounded-full h-3 overflow-hidden border border-slate-800 p-[1px]">
-                    <div id="power-bar" class="bg-gradient-to-r from-cyan-500 via-indigo-500 to-amber-500 h-full w-0 rounded-full transition-all duration-75 shadow-[0_0_8px_rgba(99,102,241,0.4)]"></div>
-                </div>
-                <!-- Manueller Trigger für Mobile/Touch-Support & Sub/Add Toggle -->
-                <div class="flex gap-2 w-full mt-2">
-                    <button id="shoot-button" disabled class="flex-grow cyber-font text-[8px] font-bold bg-slate-800 text-slate-500 py-1.5 rounded-lg shadow-md tracking-wider border border-slate-700 cursor-not-allowed">
-                        ERST BEWEGUNG ABSCHLIESSEN
-                    </button>
-                    <button id="btn-toggle-mode" class="flex-shrink-0 cyber-font text-[8px] font-bold py-1.5 px-3 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-rose-950/40 text-rose-400 border-rose-500/30 hover:bg-rose-900/40 hover:border-rose-500/50">
-                        SUB
-                    </button>
+                <div class="panel-content w-full">
+                    <!-- Power-Balken -->
+                    <div class="w-full bg-slate-950/50 rounded-full h-3 overflow-hidden border border-slate-800 p-[1px]">
+                        <div id="power-bar" class="bg-gradient-to-r from-cyan-500 via-indigo-500 to-amber-500 h-full w-0 rounded-full transition-all duration-75 shadow-[0_0_8px_rgba(99,102,241,0.4)]"></div>
+                    </div>
+                    <!-- Manueller Trigger für Mobile/Touch-Support & Sub/Add Toggle -->
+                    <div class="flex gap-2 w-full mt-2">
+                        <button id="shoot-button" disabled class="flex-grow cyber-font text-[8px] font-bold bg-slate-800 text-slate-500 py-1.5 rounded-lg shadow-md tracking-wider border border-slate-700 cursor-not-allowed">
+                            ERST BEWEGUNG ABSCHLIESSEN
+                        </button>
+                        <button id="btn-toggle-mode" class="flex-shrink-0 cyber-font text-[8px] font-bold py-1.5 px-3 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-rose-950/40 text-rose-400 border-rose-500/30 hover:bg-rose-900/40 hover:border-rose-500/50 shadow-[0_0_8px_rgba(244,63,94,0.2)]">
+                            SUB
+                        </button>
+                    </div>
                 </div>
             </div>
 
             <!-- Rechte Aktionssteuerung -->
-            <div class="cyber-panel rounded-lg p-2.5 shadow-md text-right max-w-[260px] ml-auto w-full">
-                <h3 id="selected-tank-label" class="cyber-font text-xs font-bold text-indigo-400 mb-0.5 tracking-wider">Kein Panzer gewählt</h3>
-                <div class="tech-font text-[10px] text-slate-300 mb-2">
-                    HP: <span id="selected-tank-hp" class="font-bold text-slate-100">-</span> | 
-                    AP: <span id="selected-tank-ap" class="font-bold text-slate-100">-</span>
-                </div>
-                <div class="flex gap-1.5 justify-end">
-                    <!-- Phasenspezifischer Aktions-Button -->
-                    <button id="btn-phase-action" disabled class="bg-slate-800 text-slate-500 text-[10px] px-2 py-1.5 rounded-md font-bold cursor-not-allowed transition-colors border border-slate-700 tech-font">
-                        WEITER
+            <div id="right-action-panel" class="cyber-panel rounded-lg p-2.5 shadow-md text-right max-w-[260px] ml-auto w-full panel-collapsible">
+                <div class="flex justify-between items-center mb-0.5">
+                    <button class="panel-toggle-btn text-slate-500 hover:text-indigo-400 transition-colors pointer-events-auto cursor-pointer" title="Minimieren/Maximieren">
+                        <i class="fa-solid fa-chevron-up text-[8px]"></i>
                     </button>
-                    <button id="btn-skip-turn" class="bg-slate-800/60 hover:bg-slate-700 text-[10px] px-2 py-1.5 rounded-md font-bold cursor-pointer transition-colors border border-slate-700 tech-font">
-                        PASSEN
-                    </button>
+                    <h3 id="selected-tank-label" class="cyber-font text-xs font-bold text-indigo-400 tracking-wider">Kein Panzer gewählt</h3>
                 </div>
-            </div>
+                <div class="panel-content">
+                    <div class="tech-font text-[10px] text-slate-300 mb-2">
+                        HP: <span id="selected-tank-hp" class="font-bold text-slate-100">-</span> | 
+                        AP: <span id="selected-tank-ap" class="font-bold text-slate-100">-</span>
+                    </div>
+                    <div class="flex gap-1.5 justify-end">
+                        <!-- Phasenspezifischer Aktions-Button -->
+                        <button id="btn-phase-action" disabled class="bg-slate-800 text-slate-500 text-[10px] px-2 py-1.5 rounded-md font-bold cursor-not-allowed transition-colors border border-slate-700 tech-font">
+                            WEITER
+                        </button>
+                        <button id="btn-skip-turn" class="bg-slate-800/60 hover:bg-slate-700 text-[10px] px-2 py-1.5 rounded-md font-bold cursor-pointer transition-colors border border-slate-700 tech-font">
+                            PASSEN
+                        </button>
+                    </div>
+                </div>
+            </div>          
         </div>
     </div>
 
@@ -198,6 +231,13 @@
                     <li><strong class="text-cyan-400">Phase 2 - Fahren:</strong> Fahre mit <strong class="text-white">W/S</strong> vorwärts/rückwärts in Schussrichtung, rotiere mit <strong class="text-white">A/D</strong>. Drücke <strong class="text-white">Leertaste</strong> zum Beenden.</li>
                     <li><strong class="text-purple-400">Phase 3 - Zielen:</strong> Justiere Turm und Neigung mit <strong class="text-white">WASD</strong>. Halte die <strong class="text-white">Leertaste</strong> zum Aufladen des Schusses gedrückt.</li>
                 </ul>
+                <p class="border-t border-slate-800 pt-2 text-indigo-300 cyber-font text-[10px] font-bold tracking-wider mt-2">TACTICAL SHOT MODES:</p>
+                <ul class="list-disc list-inside space-y-1">
+                    <li><strong class="text-rose-400">SUB:</strong> Zerstörerischer Voxel-Sprengschuss.</li>
+                    <li><strong class="text-emerald-400">ADD:</strong> Erzeugt einen konstruktiven Kristalldom.</li>
+                    <li><strong class="text-violet-400">WALL:</strong> Baut eine orthogonale Schutzwand (max. 3).</li>
+                    <li><strong class="text-cyan-400">SHIELD:</strong> Kuppelschild (10 Voxel ø, 5 Runden, einmalig). Schützt Panzer vor äußeren Treffern; Schießen nach außen möglich!</li>
+                </ul>
             </div>
 
             <div class="mt-6 flex justify-center">
@@ -209,6 +249,6 @@
     </div>
 
     <!-- Modulares Game Script -->
-    <script type="module" src="js/main.js?v=6"></script>
+    <script type="module" src="js/main.js?v=13"></script>
 </body>
 </html>

@@ -1,11 +1,11 @@
 // Projectile logic, movement, and terrain destruction
-import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, PALETTE } from './constants.js?v=6';
-import { state, projectiles, tanks } from './state.js?v=6';
-import { getBlock, setBlock, buildTerrainMesh } from './terrain.js?v=6';
-import { playSound } from './audio.js?v=6';
-import { spawnExplosion, spawnDebrisParticle, spawnTrailParticle } from './particles.js?v=6';
-import { applyGravityToTanks } from './tank.js?v=6';
-import { nextTurn, showAnnouncement } from './ui.js?v=6';
+import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, PALETTE } from './constants.js?v=13';
+import { state, projectiles, tanks } from './state.js?v=13';
+import { getBlock, setBlock, buildTerrainMesh, getSurfaceY } from './terrain.js?v=13';
+import { playSound } from './audio.js?v=13';
+import { spawnExplosion, spawnDebrisParticle, spawnTrailParticle } from './particles.js?v=13';
+import { applyGravityToTanks } from './tank.js?v=13';
+import { nextTurn, showAnnouncement, deployShield } from './ui.js?v=13';
 
 export class Projectile {
     constructor(startX, startY, startZ, velocity, shooterTank) {
@@ -16,10 +16,13 @@ export class Projectile {
         this.vy = velocity.y;
         this.vz = velocity.z;
         this.shooter = shooterTank;
+        this.mode = state.shotMode;
         
-        const isAddMode = state.shotMode === 'add';
-        const projColor = isAddMode ? 0x10b981 : 0x38bdf8;
-        const lightColor = isAddMode ? 0x10b981 : 0x06b6d4;
+        const isAddMode = this.mode === 'add';
+        const isWallMode = this.mode === 'wall';
+        const isShieldMode = this.mode === 'shield';
+        const projColor = isAddMode ? 0x10b981 : (isWallMode ? 0x8b5cf6 : (isShieldMode ? 0x00f3ff : 0x38bdf8));
+        const lightColor = isAddMode ? 0x10b981 : (isWallMode ? 0x8b5cf6 : (isShieldMode ? 0x00f3ff : 0x06b6d4));
 
         const geom = new THREE.SphereGeometry(0.35, 8, 8);
         const mat = new THREE.MeshBasicMaterial({ color: projColor });
@@ -60,6 +63,28 @@ export class Projectile {
         if (this.y < -5 || this.x < -10 || this.x > GRID_SIZE_X * BLOCK_SIZE + 10 || this.z < -10 || this.z > GRID_SIZE_Z * BLOCK_SIZE + 10) {
             this.destroy();
             return false;
+        }
+
+        // Check shield dome collisions
+        if (state.activeShields) {
+            for (const shield of state.activeShields) {
+                // If shooter was inside this shield, the projectile can pass out of it
+                const shooterPos = this.shooter ? new THREE.Vector3(this.shooter.x * BLOCK_SIZE, this.shooter.y * BLOCK_SIZE, this.shooter.z * BLOCK_SIZE) : null;
+                const shooterInside = shooterPos ? (shooterPos.distanceTo(shield.center) <= shield.radius) : false;
+                
+                if (shooterInside) {
+                    continue; // Ignore this shield
+                }
+
+                // Check if projectile is inside the shield boundary
+                const projPos = new THREE.Vector3(this.x, this.y, this.z);
+                const distToCenter = projPos.distanceTo(shield.center);
+                if (distToCenter <= shield.radius) {
+                    // Collision! Explode at current position
+                    this.explode(this.x, this.y, this.z);
+                    return false;
+                }
+            }
         }
 
         const gridX = Math.round(this.x / BLOCK_SIZE);
@@ -108,9 +133,15 @@ export class Projectile {
         const gy = Math.round(ey / BLOCK_SIZE);
         const gz = Math.round(ez / BLOCK_SIZE);
         
-        console.log("Projectile explode. Shot Mode:", state.shotMode, "Impact Voxel:", gx, gy, gz);
+        console.log("Projectile explode. Shot Mode:", this.mode, "Impact Voxel:", gx, gy, gz);
 
-        if (state.shotMode === 'add') {
+        if (this.mode === 'shield') {
+            deployShield(ex, ey, ez, this.shooter ? this.shooter.player : state.activePlayer);
+            this.destroy();
+            return;
+        }
+
+        if (this.mode === 'add') {
             playSound('charge');
             state.screenShakeIntensity = 0.4;
 
@@ -144,6 +175,70 @@ export class Projectile {
             return;
         }
 
+        if (this.mode === 'wall') {
+            playSound('charge');
+            state.screenShakeIntensity = 0.5;
+
+            // 1. Calculate orthogonal vector snap
+            let dxVec = 0;
+            let dzVec = 0;
+            const vx = this.vx;
+            const vz = this.vz;
+
+            if (Math.abs(vx) > Math.abs(vz)) {
+                dzVec = 1; // Orthogonal to X is Z
+            } else {
+                dxVec = 1; // Orthogonal to Z is X
+            }
+
+            const wallCoords = [];
+            const playerId = this.shooter ? this.shooter.player : state.activePlayer;
+            const wallLength = 10;
+            const wallHeight = 5;
+            const blockType = 7; // Purple wall block
+
+            // 2. Build the wall centered on the impact coordinate gx, gz
+            // Length: 10 voxels (from offset -5 to +4)
+            for (let i = -5; i <= 4; i++) {
+                const tx = gx + dxVec * i;
+                const tz = gz + dzVec * i;
+
+                if (tx >= 0 && tx < GRID_SIZE_X && tz >= 0 && tz < GRID_SIZE_Z) {
+                    const startY = getSurfaceY(tx, tz);
+                    for (let dy = 0; dy < wallHeight; dy++) {
+                        const ty = startY + dy;
+                        if (ty < GRID_SIZE_Y) {
+                            setBlock(tx, ty, tz, blockType);
+                            wallCoords.push({ x: tx, y: ty, z: tz });
+                        }
+                    }
+                }
+            }
+
+            // 3. Keep track of wall counts per player and replace the oldest if over 3
+            if (!state.playerWalls) {
+                state.playerWalls = { 1: [], 2: [] };
+            }
+            if (state.playerWalls[playerId].length >= 3) {
+                const oldestWall = state.playerWalls[playerId].shift();
+                oldestWall.forEach(coord => {
+                    // Only clear it if it's still our purple shield block
+                    if (getBlock(coord.x, coord.y, coord.z) === 7) {
+                        setBlock(coord.x, coord.y, coord.z, 0);
+                    }
+                });
+                showAnnouncement(`Spieler ${playerId}: Älteste Wand entfernt (max. 3 Wände)!`);
+            }
+            state.playerWalls[playerId].push(wallCoords);
+
+            buildTerrainMesh();
+            applyGravityToTanks();
+
+            spawnExplosion(new THREE.Vector3(ex, ey, ez), 0x8b5cf6, 35);
+            this.destroy();
+            return;
+        }
+
         playSound('explosion');
         
         state.screenShakeIntensity = 1.3;
@@ -163,10 +258,17 @@ export class Projectile {
                         if (type > 0) {
                             spawnDebrisParticle(tx * BLOCK_SIZE, ty * BLOCK_SIZE, tz * BLOCK_SIZE, PALETTE[type]);
                             
-                            if (dist > destroyRadius - 0.7 && Math.random() < 0.6) {
-                                setBlock(tx, ty, tz, 6); 
+                            if (type === 7) {
+                                // Purple block is particularly hard: it has a high chance (70%) to downgrade to burnt ash (type 6) or resist, instead of being destroyed
+                                if (Math.random() < 0.7) {
+                                    setBlock(tx, ty, tz, 6);
+                                }
                             } else {
-                                setBlock(tx, ty, tz, 0); 
+                                if (dist > destroyRadius - 0.7 && Math.random() < 0.6) {
+                                    setBlock(tx, ty, tz, 6); 
+                                } else {
+                                    setBlock(tx, ty, tz, 0); 
+                                }
                             }
                         }
                     }
@@ -178,6 +280,24 @@ export class Projectile {
 
         tanks.forEach(tank => {
             const tankWorldPos = new THREE.Vector3(tank.x * BLOCK_SIZE, (tank.y - 0.5) * BLOCK_SIZE, tank.z * BLOCK_SIZE);
+            
+            // Check if tank is protected by any active shield dome
+            let isProtected = false;
+            if (state.activeShields) {
+                for (const shield of state.activeShields) {
+                    const distToShield = tankWorldPos.distanceTo(shield.center);
+                    if (distToShield <= shield.radius) {
+                        isProtected = true;
+                        break;
+                    }
+                }
+            }
+
+            if (isProtected) {
+                console.log(`${tank.name} is protected inside a shield dome!`);
+                return; // Ignore damage
+            }
+
             const distToExplosion = tankWorldPos.distanceTo(new THREE.Vector3(ex, ey, ez));
             
             const maxDmgDist = 8.5; 

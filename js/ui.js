@@ -1,8 +1,8 @@
 // UI layouts, banner displays, updates, wind direction display, victory check, and selections
-import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js?v=6';
-import { state, tanks, movementHighlights } from './state.js?v=6';
-import { getSurfaceY } from './terrain.js?v=6';
-import { playSound } from './audio.js?v=6';
+import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js?v=13';
+import { state, tanks, movementHighlights } from './state.js?v=13';
+import { getSurfaceY } from './terrain.js?v=13';
+import { playSound } from './audio.js?v=13';
 
 export function showAnnouncement(text) {
     const container = document.getElementById('announcement-text');
@@ -317,6 +317,7 @@ export function nextTurn() {
     if (state.isGameOver) return;
 
     state.activePlayer = state.activePlayer === 1 ? 2 : 1;
+    tickActiveShields(state.activePlayer);
 
     state.windDirection = Math.random() * Math.PI * 2;
     state.windSpeed = Math.floor(Math.random() * 9); 
@@ -349,12 +350,167 @@ export function checkVictory() {
 
     if (!p1Alive || !p2Alive) {
         state.isGameOver = true;
-        const winModal = document.getElementById('game-over-modal');
-        const winText = document.getElementById('winner-text');
+        const modal = document.getElementById('game-over-modal');
+        const text = document.getElementById('winner-text');
         
-        winText.innerText = p1Alive ? "SPIELER 1 TRIUMPHIERT!" : "SPIELER 2 TRIUMPHIERT!";
-        winText.className = `tech-font text-lg font-bold mb-4 ${p1Alive ? 'text-emerald-400' : 'text-rose-400'}`;
-        
-        winModal.classList.remove('opacity-0', 'pointer-events-none');
+        if (p1Alive) {
+            text.innerText = "Spieler 1 dominiert das Schlachtfeld!";
+            text.className = "tech-font text-base text-emerald-400 mb-4";
+        } else if (p2Alive) {
+            text.innerText = "Spieler 2 dominiert das Schlachtfeld!";
+            text.className = "tech-font text-base text-rose-400 mb-4";
+        } else {
+            text.innerText = "Niemand überlebt das voxelierte Chaos!";
+            text.className = "tech-font text-base text-slate-400 mb-4";
+        }
+
+        if (modal) {
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+        }
+        playSound('victory');
+    }
+}
+
+export function showDamagePopup(amount, tankMesh, colorHex) {
+    const camera = state.camera;
+    if (!camera) return;
+
+    // Get screen coordinates
+    const vector = new THREE.Vector3();
+    tankMesh.getWorldPosition(vector);
+    vector.y += 2.5; // Offset upwards to show above the tank
+    
+    vector.project(camera);
+    
+    // Check if behind camera frustum
+    if (vector.z > 1) return;
+
+    const x = (vector.x * 0.5 + 0.5) * window.innerWidth;
+    const y = (-(vector.y * 0.5) + 0.5) * window.innerHeight;
+
+    const popup = document.createElement('div');
+    popup.className = 'damage-popup cyber-font';
+    popup.innerText = `-${amount} HP`;
+    
+    const colorStr = '#' + new THREE.Color(colorHex).getHexString();
+    popup.style.color = colorStr;
+    popup.style.textShadow = `0 0 10px ${colorStr}, 0 0 20px ${colorStr}`;
+    popup.style.left = `${x}px`;
+    popup.style.top = `${y}px`;
+
+    document.body.appendChild(popup);
+
+    setTimeout(() => {
+        popup.remove();
+    }, 1000);
+}
+
+// deployShield instantiates a transparent shimmering dome over terrain, blocking bullets from hitting tanks inside
+export function deployShield(ex, ey, ez, playerId) {
+    playSound('charge');
+    state.screenShakeIntensity = 0.6;
+    
+    // Player colors: Player 1 = 0x10b981 (emerald green), Player 2 = 0xf43f5e (rose red)
+    const shieldColor = (playerId === 1) ? 0x10b981 : 0xf43f5e;
+    const shieldColorHex = (playerId === 1) ? '#10b981' : '#f43f5e';
+    
+    // Create full sphere geometry
+    // radius = 10 units (diameter 10 voxels, block size 2)
+    const shieldGeom = new THREE.SphereGeometry(10, 32, 32);
+    const shieldMat = new THREE.MeshPhongMaterial({
+        color: shieldColor,
+        transparent: true,
+        opacity: 0.25,
+        shininess: 100,
+        specular: shieldColor,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+        depthTest: true,
+        blending: THREE.AdditiveBlending
+    });
+    const shieldMesh = new THREE.Mesh(shieldGeom, shieldMat);
+    shieldMesh.position.set(ex, ey, ez);
+    state.scene.add(shieldMesh);
+
+    // Create floating text sprite for turnsLeft
+    const sprite = createNumberSprite(5, shieldColorHex);
+    sprite.position.set(ex, ey + 11.5, ez);
+    state.scene.add(sprite);
+
+    const shieldObj = {
+        owner: playerId,
+        center: new THREE.Vector3(ex, ey, ez),
+        radius: 10,
+        turnsLeft: 5,
+        mesh: shieldMesh,
+        textSprite: sprite
+    };
+
+    if (!state.activeShields) state.activeShields = [];
+    state.activeShields.push(shieldObj);
+
+    // Deduct charge
+    if (!state.shieldCharges) state.shieldCharges = { 1: 1, 2: 1 };
+    state.shieldCharges[playerId] = 0;
+    
+    showAnnouncement(`Spieler ${playerId}: Schutzkuppel aufgebaut (5 Runden)!`);
+}
+
+function createNumberSprite(number, colorHex) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, 128, 128);
+    ctx.font = 'bold 80px Orbitron, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    
+    ctx.shadowColor = colorHex;
+    ctx.shadowBlur = 15;
+    ctx.fillStyle = colorHex;
+    ctx.fillText(number.toString(), 64, 64);
+    
+    const texture = new THREE.CanvasTexture(canvas);
+    const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true });
+    const sprite = new THREE.Sprite(spriteMat);
+    sprite.scale.set(4, 4, 1);
+    return sprite;
+}
+
+export function updateShieldSprite(shield) {
+    const canvas = shield.textSprite.material.map.image;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, 128, 128);
+    ctx.font = 'bold 80px Orbitron, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    
+    const colorHex = (shield.owner === 1) ? '#10b981' : '#f43f5e';
+    ctx.shadowColor = colorHex;
+    ctx.shadowBlur = 15;
+    ctx.fillStyle = colorHex;
+    ctx.fillText(shield.turnsLeft.toString(), 64, 64);
+    shield.textSprite.material.map.needsUpdate = true;
+}
+
+export function tickActiveShields(newActivePlayer) {
+    if (!state.activeShields) state.activeShields = [];
+    if (!state.shieldCharges) state.shieldCharges = { 1: 1, 2: 1 };
+    
+    for (let i = state.activeShields.length - 1; i >= 0; i--) {
+        const shield = state.activeShields[i];
+        if (shield.owner === newActivePlayer) {
+            shield.turnsLeft--;
+            if (shield.turnsLeft <= 0) {
+                state.scene.remove(shield.mesh);
+                state.scene.remove(shield.textSprite);
+                state.activeShields.splice(i, 1);
+                playSound('explosion');
+                showAnnouncement(`Kuppel von Spieler ${shield.owner} ist erloschen!`);
+            } else {
+                updateShieldSprite(shield);
+            }
+        }
     }
 }

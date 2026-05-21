@@ -62,6 +62,38 @@ Open the application. Click **SYSTEM INITIATION** to start the synthwave backgro
 
 ---
 
+## ⚔️ Strategische Schuss-Modi (Tactical Shot Modes)
+
+Das Herzstück des Gameplays ist das dynamische Terrain-System, kombiniert mit vier spezialisierten Schuss-Modi. Durch klugen Einsatz von **SUB**, **ADD**, **WALL** und **SHIELD** lässt sich das Schlachtfeld nach den eigenen Wünschen verformen und verteidigen:
+
+### 🔴 SUB (Destruktiv - Rosenrot)
+* **Wirkung**: Zerstört getroffenes Voxel-Terrain im Radius und fügt nahegelegenen Panzern bis zu 65 Schadenspunkte zu.
+* **Strategischer Einsatz**:
+  * **Untergraben**: Schieße direkt unter gegnerische Panzer. Wenn das Voxel-Fundament verschwindet, stürzen die Panzer ab, nehmen Fallschaden und büßen wertvolle Deckung ein.
+  * **Sichtlinien frei sprengen**: Räume Berge oder gegnerische Verteidigungsmauern aus dem Weg, um eine freie Schussbahn zu schaffen.
+
+### 🟢 ADD (Konstruktiv - Smaragdgrün)
+* **Wirkung**: Baut einen kleinen Hügel aus grünen Energiekristallen auf, um Krater aufzufüllen oder neues Terrain zu erschaffen.
+* **Strategischer Einsatz**:
+  * **Brücken & Rampen**: Erschaffe Auffahrtsrampen, um Panzer auf Anhöhen zu bewegen. Höheres Terrain gewährt einen Reichweiten- und Zieldistanz-Vorteil!
+  * **Einsperren**: Schieße direkt auf einen feindlichen Panzer, um ihn mit Voxel-Kristallen einzubauen. Das blockiert seine Bewegung (Phase 2) und schränkt seinen Schusswinkel stark ein.
+
+### 🟣 WALL (Verteidigungswand - Neonviolett)
+* **Wirkung**: Errichtet eine massive Wand aus violetten Schutzvoxeln (10 Voxel lang, 5 Voxel hoch), die sich orthogonal zur Schussrichtung ausrichtet.
+* **Besonderheit**: Diese Voxel sind extrem widerstandsfähig (70% Chance, bei Explosionen nur zu Asche zu verglühen statt weggesprengt zu werden). Jeder Spieler kann maximal 3 Wände gleichzeitig aktiv halten.
+* **Strategischer Einsatz**:
+  * **Sofort-Deckung**: Baue eine Wand direkt vor deinen Einheiten auf, um die Sicht- und Schusslinie naher Gegner zu blockieren.
+  * **Taktischer Chokepoint**: Blockiere schmale Passagen auf der Voxel-Karte, um feindliche Panzer zu Umwegen zu zwingen.
+
+### 🔵 SHIELD (Schutzkuppel - Neoncyan)
+* **Wirkung**: Spawnt eine riesige, schimmernde Energiekuppel (10 Voxel Durchmesser) für insgesamt 5 Runden.
+* **Besonderheit**: **Einmalige Nutzung** pro Spieler und Match. Projektile, die von *innen* geschossen werden, fliegen ungehindert nach draußen. Jegliche Projektile von *außen* prallen an der Kuppel ab und explodieren auf ihrer Oberfläche. Tanks unter der Kuppel erleiden **0 Schaden**.
+* **Strategischer Einsatz**:
+  * **Die ultimative Festung**: Platziere die Kuppel über einer Gruppe eigener Panzer. Du kannst aus der Sicherheit der Kuppel herausfeuern, während die Gegner vergeblich versuchen, deine Panzer mit Explosivgeschossen zu treffen.
+  * **Schadensminimierung**: Nutze die Kuppel, um einen schwer beschädigten Panzer vor dem Todesstoß zu bewahren.
+
+---
+
 ## 💻 Local Development
 
 Run a local web server in the root directory to support ES module loading:
