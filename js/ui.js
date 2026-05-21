@@ -1,8 +1,8 @@
 // UI layouts, banner displays, updates, wind direction display, victory check, and selections
-import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js?v=13';
-import { state, tanks, movementHighlights } from './state.js?v=13';
-import { getSurfaceY } from './terrain.js?v=13';
-import { playSound } from './audio.js?v=13';
+import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js?v=14';
+import { state, tanks, movementHighlights } from './state.js?v=14';
+import { getSurfaceY } from './terrain.js?v=14';
+import { playSound } from './audio.js?v=14';
 
 export function showAnnouncement(text) {
     const container = document.getElementById('announcement-text');
@@ -433,7 +433,7 @@ export function deployShield(ex, ey, ez, playerId) {
     state.scene.add(shieldMesh);
 
     // Create floating text sprite for turnsLeft
-    const sprite = createNumberSprite(5, shieldColorHex);
+    const sprite = createNumberSprite(10, shieldColorHex);
     sprite.position.set(ex, ey + 11.5, ez);
     state.scene.add(sprite);
 
@@ -441,7 +441,7 @@ export function deployShield(ex, ey, ez, playerId) {
         owner: playerId,
         center: new THREE.Vector3(ex, ey, ez),
         radius: 10,
-        turnsLeft: 5,
+        turnsLeft: 10,
         mesh: shieldMesh,
         textSprite: sprite
     };
@@ -453,7 +453,7 @@ export function deployShield(ex, ey, ez, playerId) {
     if (!state.shieldCharges) state.shieldCharges = { 1: 1, 2: 1 };
     state.shieldCharges[playerId] = 0;
     
-    showAnnouncement(`Spieler ${playerId}: Schutzkuppel aufgebaut (5 Runden)!`);
+    showAnnouncement(`Spieler ${playerId}: Schutzkuppel aufgebaut (10 Runden)!`);
 }
 
 function createNumberSprite(number, colorHex) {

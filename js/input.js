@@ -1,9 +1,9 @@
 // Keyboard, Mouse, and Touch input handling
-import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js?v=13';
-import { state, tanks, projectiles } from './state.js?v=13';
-import { getSurfaceY } from './terrain.js?v=13';
-import { playSound } from './audio.js?v=13';
-import { Projectile } from './projectile.js?v=13';
+import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js?v=14';
+import { state, tanks, projectiles } from './state.js?v=14';
+import { getSurfaceY } from './terrain.js?v=14';
+import { playSound } from './audio.js?v=14';
+import { Projectile } from './projectile.js?v=14';
 import { 
     setPhase, 
     selectTank, 
@@ -11,7 +11,7 @@ import {
     highlightPossibleMoves, 
     clearHighlights,
     adjustCameraFocusOnTank
-} from './ui.js?v=13';
+} from './ui.js?v=14';
 
 export function attemptStep(dx, dz) {
     if (!state.selectedTank || state.actionsRemaining <= 0) return;

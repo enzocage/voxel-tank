@@ -1,11 +1,11 @@
 // Main Three.js setup, environment generation, and game loop
-import { GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, BLOCK_SIZE } from './constants.js?v=13';
-import { state, tanks, projectiles, particles } from './state.js?v=13';
-import { generateTerrain, buildTerrainMesh, getBlock } from './terrain.js?v=13';
-import { audioState, playSound, soundtrack, toggleSoundtrack, setSoundtrackVolume } from './audio.js?v=13';
-import { spawnTanks } from './tank.js?v=13';
-import { setupInput, startCharging, fireProjectile } from './input.js?v=13';
-import { updateWindUI, setPhase, selectTank, nextTurn, updateUI, highlightPossibleMoves } from './ui.js?v=13';
+import { GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, BLOCK_SIZE } from './constants.js?v=14';
+import { state, tanks, projectiles, particles } from './state.js?v=14';
+import { generateTerrain, buildTerrainMesh, getBlock } from './terrain.js?v=14';
+import { audioState, playSound, soundtrack, toggleSoundtrack, setSoundtrackVolume } from './audio.js?v=14';
+import { spawnTanks } from './tank.js?v=14';
+import { setupInput, startCharging, fireProjectile } from './input.js?v=14';
+import { updateWindUI, setPhase, selectTank, nextTurn, updateUI, highlightPossibleMoves } from './ui.js?v=14';
 
 let clock = new THREE.Clock();
 
@@ -139,50 +139,76 @@ function createStarfield() {
 }
 
 function updateTrajectoryPreview() {
-    if (!state.selectedTank || state.currentPhase !== 'AIM' || projectiles.length > 0) {
+    if (state.currentPhase !== 'AIM' && projectiles.length === 0) {
         state.trajectoryMesh.geometry.setFromPoints([]);
         return;
     }
 
+    if (!state.selectedTank && projectiles.length === 0) {
+        state.trajectoryMesh.geometry.setFromPoints([]);
+        return;
+    }
+
+    const activeProj = projectiles.length > 0 ? projectiles[0] : null;
+    const mode = activeProj ? activeProj.mode : state.shotMode;
+    const shooter = activeProj ? activeProj.shooter : state.selectedTank;
+    const pId = shooter ? shooter.player : state.activePlayer;
+
     if (state.trajectoryMesh && state.trajectoryMesh.material) {
         let col = 0x38bdf8;
-        if (state.shotMode === 'add') col = 0x10b981;
-        else if (state.shotMode === 'wall') col = 0x8b5cf6;
-        else if (state.shotMode === 'shield') col = 0x00f3ff;
+        if (mode === 'add') col = 0x10b981;
+        else if (mode === 'wall') col = (pId === 1) ? 0x10b981 : 0xf43f5e;
+        else if (mode === 'shield') col = (pId === 1) ? 0x10b981 : 0xf43f5e;
         state.trajectoryMesh.material.color.setHex(col);
     }
 
-    const yaw = state.selectedTank.bodyYaw + state.selectedTank.turretYaw;
-    const pitch = state.selectedTank.barrelPitch;
-    
-    const dirX = Math.sin(yaw) * Math.cos(pitch);
-    const dirY = Math.sin(pitch);
-    const dirZ = Math.cos(yaw) * Math.cos(pitch);
+    let startX, startY, startZ;
+    let initialVx, initialVy, initialVz;
 
-    const barrelLength = 2.0;
-    const startX = state.selectedTank.x * BLOCK_SIZE + dirX * barrelLength;
-    const startY = (state.selectedTank.y - 0.25) * BLOCK_SIZE + dirY * barrelLength;
-    const startZ = state.selectedTank.z * BLOCK_SIZE + dirZ * barrelLength;
+    if (activeProj) {
+        startX = activeProj.startX;
+        startY = activeProj.startY;
+        startZ = activeProj.startZ;
+        initialVx = activeProj.initialVx;
+        initialVy = activeProj.initialVy;
+        initialVz = activeProj.initialVz;
+    } else {
+        const yaw = state.selectedTank.bodyYaw + state.selectedTank.turretYaw;
+        const pitch = state.selectedTank.barrelPitch;
+        
+        const dirX = Math.sin(yaw) * Math.cos(pitch);
+        const dirY = Math.sin(pitch);
+        const dirZ = Math.cos(yaw) * Math.cos(pitch);
 
-    const minSpeed = 8.0;
-    const maxSpeed = 28.0;
-    let power = 0.5; 
-    if (state.isCharging) {
-        const elapsed = performance.now() - state.chargeStartTime;
-        power = Math.min(1.0, elapsed / 1500);
+        const barrelLength = 2.0;
+        startX = state.selectedTank.x * BLOCK_SIZE + dirX * barrelLength;
+        startY = (state.selectedTank.y - 0.25) * BLOCK_SIZE + dirY * barrelLength;
+        startZ = state.selectedTank.z * BLOCK_SIZE + dirZ * barrelLength;
+
+        const minSpeed = 8.0;
+        const maxSpeed = 28.0;
+        let power = 0.5; 
+        if (state.isCharging) {
+            const elapsed = performance.now() - state.chargeStartTime;
+            power = Math.min(1.0, elapsed / 1500);
+        }
+        const speed = minSpeed + (power * (maxSpeed - minSpeed));
+
+        initialVx = dirX * speed;
+        initialVy = dirY * speed;
+        initialVz = dirZ * speed;
     }
-    const speed = minSpeed + (power * (maxSpeed - minSpeed));
 
     let tempX = startX;
     let tempY = startY;
     let tempZ = startZ;
-    let tempVx = dirX * speed;
-    let tempVy = dirY * speed;
-    let tempVz = dirZ * speed;
+    let tempVx = initialVx;
+    let tempVy = initialVy;
+    let tempVz = initialVz;
 
     const points = [];
     const timeStep = 0.05;
-    const maxSteps = 60; 
+    const maxSteps = 250; 
 
     for (let step = 0; step < maxSteps; step++) {
         points.push(new THREE.Vector3(tempX, tempY, tempZ));
@@ -203,6 +229,11 @@ function updateTrajectoryPreview() {
         const gridZ = Math.round(tempZ / BLOCK_SIZE);
 
         if (getBlock(gridX, gridY, gridZ) > 0 || tempY < 0) {
+            points.push(new THREE.Vector3(tempX, tempY, tempZ));
+            break;
+        }
+
+        if (tempY < -5 || tempX < -10 || tempX > GRID_SIZE_X * BLOCK_SIZE + 10 || tempZ < -10 || tempZ > GRID_SIZE_Z * BLOCK_SIZE + 10) {
             points.push(new THREE.Vector3(tempX, tempY, tempZ));
             break;
         }

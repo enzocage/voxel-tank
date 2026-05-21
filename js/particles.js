@@ -1,5 +1,5 @@
 // Particle systems (dust, sparks, explosions, trails)
-import { state, particles } from './state.js?v=13';
+import { state, particles } from './state.js?v=14';
 
 export class Particle {
     constructor(x, y, z, color, size, velocity, life) {

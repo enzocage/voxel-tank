@@ -1,11 +1,11 @@
 // Projectile logic, movement, and terrain destruction
-import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, PALETTE } from './constants.js?v=13';
-import { state, projectiles, tanks } from './state.js?v=13';
-import { getBlock, setBlock, buildTerrainMesh, getSurfaceY } from './terrain.js?v=13';
-import { playSound } from './audio.js?v=13';
-import { spawnExplosion, spawnDebrisParticle, spawnTrailParticle } from './particles.js?v=13';
-import { applyGravityToTanks } from './tank.js?v=13';
-import { nextTurn, showAnnouncement, deployShield } from './ui.js?v=13';
+import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, PALETTE } from './constants.js?v=14';
+import { state, projectiles, tanks } from './state.js?v=14';
+import { getBlock, setBlock, buildTerrainMesh, getSurfaceY } from './terrain.js?v=14';
+import { playSound } from './audio.js?v=14';
+import { spawnExplosion, spawnDebrisParticle, spawnTrailParticle } from './particles.js?v=14';
+import { applyGravityToTanks } from './tank.js?v=14';
+import { nextTurn, showAnnouncement, deployShield } from './ui.js?v=14';
 
 export class Projectile {
     constructor(startX, startY, startZ, velocity, shooterTank) {
@@ -18,11 +18,21 @@ export class Projectile {
         this.shooter = shooterTank;
         this.mode = state.shotMode;
         
+        // Save initial parameters for trajectory preview during flight
+        this.startX = startX;
+        this.startY = startY;
+        this.startZ = startZ;
+        this.initialVx = velocity.x;
+        this.initialVy = velocity.y;
+        this.initialVz = velocity.z;
+        
         const isAddMode = this.mode === 'add';
         const isWallMode = this.mode === 'wall';
         const isShieldMode = this.mode === 'shield';
-        const projColor = isAddMode ? 0x10b981 : (isWallMode ? 0x8b5cf6 : (isShieldMode ? 0x00f3ff : 0x38bdf8));
-        const lightColor = isAddMode ? 0x10b981 : (isWallMode ? 0x8b5cf6 : (isShieldMode ? 0x00f3ff : 0x06b6d4));
+        const shooterId = shooterTank ? shooterTank.player : state.activePlayer;
+        const playerColor = (shooterId === 1) ? 0x10b981 : 0xf43f5e;
+        const projColor = isAddMode ? 0x10b981 : (isWallMode ? playerColor : (isShieldMode ? playerColor : 0x38bdf8));
+        const lightColor = isAddMode ? 0x10b981 : (isWallMode ? playerColor : (isShieldMode ? playerColor : 0x06b6d4));
 
         const geom = new THREE.SphereGeometry(0.35, 8, 8);
         const mat = new THREE.MeshBasicMaterial({ color: projColor });
@@ -195,7 +205,7 @@ export class Projectile {
             const playerId = this.shooter ? this.shooter.player : state.activePlayer;
             const wallLength = 10;
             const wallHeight = 5;
-            const blockType = 7; // Purple wall block
+            const blockType = (playerId === 1) ? 7 : 8; // 7 for Player 1, 8 for Player 2
 
             // 2. Build the wall centered on the impact coordinate gx, gz
             // Length: 10 voxels (from offset -5 to +4)
@@ -222,8 +232,9 @@ export class Projectile {
             if (state.playerWalls[playerId].length >= 3) {
                 const oldestWall = state.playerWalls[playerId].shift();
                 oldestWall.forEach(coord => {
-                    // Only clear it if it's still our purple shield block
-                    if (getBlock(coord.x, coord.y, coord.z) === 7) {
+                    // Only clear it if it's still a wall block
+                    const blockVal = getBlock(coord.x, coord.y, coord.z);
+                    if (blockVal === 7 || blockVal === 8) {
                         setBlock(coord.x, coord.y, coord.z, 0);
                     }
                 });
@@ -258,8 +269,8 @@ export class Projectile {
                         if (type > 0) {
                             spawnDebrisParticle(tx * BLOCK_SIZE, ty * BLOCK_SIZE, tz * BLOCK_SIZE, PALETTE[type]);
                             
-                            if (type === 7) {
-                                // Purple block is particularly hard: it has a high chance (70%) to downgrade to burnt ash (type 6) or resist, instead of being destroyed
+                            if (type === 7 || type === 8) {
+                                // Wall block is particularly hard: it has a high chance (70%) to downgrade to burnt ash (type 6) or resist, instead of being destroyed
                                 if (Math.random() < 0.7) {
                                     setBlock(tx, ty, tz, 6);
                                 }
