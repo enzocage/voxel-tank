@@ -1,5 +1,5 @@
 // Keyboard, Mouse, and Touch input handling
-import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z } from './constants.js';
+import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js';
 import { state, tanks, projectiles } from './state.js';
 import { getSurfaceY } from './terrain.js';
 import { playSound } from './audio.js';
@@ -56,7 +56,7 @@ export function startCharging() {
 export function fireProjectile() {
     state.isCharging = false;
     
-    const yaw = state.selectedTank.turretYaw;
+    const yaw = state.selectedTank.bodyYaw + state.selectedTank.turretYaw;
     const pitch = state.selectedTank.barrelPitch;
     
     const dirX = Math.sin(yaw) * Math.cos(pitch);
@@ -97,10 +97,18 @@ export function setupInput() {
             let dx = 0;
             let dz = 0;
 
-            if (e.code === 'KeyW' || e.code === 'ArrowUp') { dz = -1; }
-            else if (e.code === 'KeyS' || e.code === 'ArrowDown') { dz = 1; }
-            else if (e.code === 'KeyA' || e.code === 'ArrowLeft') { dx = -1; }
-            else if (e.code === 'KeyD' || e.code === 'ArrowRight') { dx = 1; }
+            if (e.code === 'KeyW' || e.code === 'ArrowUp') {
+                const absoluteYaw = state.selectedTank.bodyYaw + state.selectedTank.turretYaw;
+                const dir = getCardinalDirectionFromYaw(absoluteYaw, true);
+                dx = dir.dx;
+                dz = dir.dz;
+            }
+            else if (e.code === 'KeyS' || e.code === 'ArrowDown') {
+                const absoluteYaw = state.selectedTank.bodyYaw + state.selectedTank.turretYaw;
+                const dir = getCardinalDirectionFromYaw(absoluteYaw, false);
+                dx = dir.dx;
+                dz = dir.dz;
+            }
 
             if (dx !== 0 || dz !== 0) {
                 e.preventDefault();

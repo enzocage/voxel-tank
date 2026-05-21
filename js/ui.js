@@ -1,5 +1,5 @@
 // UI layouts, banner displays, updates, wind direction display, victory check, and selections
-import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z } from './constants.js';
+import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js';
 import { state, tanks, movementHighlights } from './state.js';
 import { getSurfaceY } from './terrain.js';
 import { playSound } from './audio.js';
@@ -66,10 +66,10 @@ export function highlightPossibleMoves() {
     const x = state.selectedTank.x;
     const z = state.selectedTank.z;
 
-    const directions = [
-        {dx: 1, dz: 0}, {dx: -1, dz: 0},
-        {dx: 0, dz: 1}, {dx: 0, dz: -1}
-    ];
+    const absoluteYaw = state.selectedTank.bodyYaw + state.selectedTank.turretYaw;
+    const fDir = getCardinalDirectionFromYaw(absoluteYaw, true);
+    const bDir = getCardinalDirectionFromYaw(absoluteYaw, false);
+    const directions = [fDir, bDir];
 
     directions.forEach(dir => {
         const nx = x + dir.dx;
@@ -161,7 +161,8 @@ export function updateUI() {
         actionsLeftLabel.innerText = `${state.actionsRemaining} Schritte übrig`;
 
         controlsHelp.innerHTML = `
-            <li><strong class="text-indigo-300">WASD / Pfeile:</strong> Schrittweise fahren (AP verbrauchen).</li>
+            <li><strong class="text-indigo-300">W / S (Auf/Ab):</strong> Vorwärts / Rückwärts in Schussrichtung.</li>
+            <li><strong class="text-indigo-300">A / D (Links/Rechts):</strong> Panzer rotieren.</li>
             <li><strong class="text-indigo-300">Leertaste / Button:</strong> Fahrphase beenden & zielen.</li>
         `;
 

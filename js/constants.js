@@ -12,3 +12,27 @@ export const PALETTE = {
     5: 0x3b82f6, // Neon-Energieknoten
     6: 0x0f172a, // Verbranntes Aschegestein (Schwarz)
 };
+
+export function getCardinalDirectionFromYaw(yaw, isForward = true) {
+    let normYaw = yaw % (Math.PI * 2);
+    if (normYaw < 0) normYaw += Math.PI * 2;
+
+    const fx = Math.sin(normYaw);
+    const fz = Math.cos(normYaw);
+
+    let dx = 0;
+    let dz = 0;
+
+    if (Math.abs(fx) > Math.abs(fz)) {
+        dx = fx > 0 ? 1 : -1;
+    } else {
+        dz = fz > 0 ? 1 : -1;
+    }
+
+    if (!isForward) {
+        dx = -dx;
+        dz = -dz;
+    }
+
+    return { dx, dz };
+}

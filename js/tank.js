@@ -17,7 +17,8 @@ export class Tank {
         this.name = name;
         this.hp = 100;
         this.maxHp = 100;
-        this.turretYaw = player === 1 ? 0 : Math.PI; 
+        this.bodyYaw = player === 1 ? 0 : Math.PI; 
+        this.turretYaw = 0; 
         this.barrelPitch = 0.3; 
         this.mesh = new THREE.Group();
         this.turretGroup = new THREE.Group();
@@ -133,6 +134,7 @@ export class Tank {
         const targetZ = this.z * BLOCK_SIZE;
 
         this.mesh.position.set(targetX, targetY, targetZ);
+        this.mesh.rotation.y = this.bodyYaw;
         
         this.turretGroup.rotation.y = this.turretYaw;
         if (this.turretGroup.children[1]) {

@@ -2,10 +2,10 @@
 import { GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, BLOCK_SIZE } from './constants.js';
 import { state, tanks, projectiles, particles } from './state.js';
 import { generateTerrain, buildTerrainMesh, getBlock } from './terrain.js';
-import { audioState, playSound, soundtrack, toggleSoundtrack, setSoundtrackVolume } from './audio.js?v=2';
+import { audioState, playSound, soundtrack, toggleSoundtrack, setSoundtrackVolume } from './audio.js?v=3';
 import { spawnTanks } from './tank.js';
 import { setupInput, startCharging, fireProjectile } from './input.js';
-import { updateWindUI, setPhase, selectTank, nextTurn, updateUI } from './ui.js';
+import { updateWindUI, setPhase, selectTank, nextTurn, updateUI, highlightPossibleMoves } from './ui.js';
 
 let clock = new THREE.Clock();
 
@@ -144,7 +144,7 @@ function updateTrajectoryPreview() {
         return;
     }
 
-    const yaw = state.selectedTank.turretYaw;
+    const yaw = state.selectedTank.bodyYaw + state.selectedTank.turretYaw;
     const pitch = state.selectedTank.barrelPitch;
     
     const dirX = Math.sin(yaw) * Math.cos(pitch);
@@ -232,6 +232,27 @@ function handleTankAiming(dt) {
     }
 }
 
+function handleTankMovement(dt) {
+    if (!state.selectedTank || state.currentPhase !== 'MOVE' || state.isGameOver) return;
+
+    const rotSpeed = 2.0; 
+    let changed = false;
+
+    if (state.keysPressed['KeyA'] || state.keysPressed['ArrowLeft']) {
+        state.selectedTank.bodyYaw += rotSpeed * dt;
+        changed = true;
+    }
+    if (state.keysPressed['KeyD'] || state.keysPressed['ArrowRight']) {
+        state.selectedTank.bodyYaw -= rotSpeed * dt;
+        changed = true;
+    }
+
+    if (changed) {
+        state.selectedTank.updateMeshPosition();
+        highlightPossibleMoves();
+    }
+}
+
 function updateChargePower() {
     if (state.isCharging) {
         const elapsed = performance.now() - state.chargeStartTime;
@@ -254,6 +275,7 @@ function animate() {
 
     const dt = Math.min(0.04, clock.getDelta()); 
 
+    handleTankMovement(dt);
     handleTankAiming(dt);
     updateChargePower();
     updateTrajectoryPreview();
