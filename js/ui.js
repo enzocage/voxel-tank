@@ -1,11 +1,12 @@
 // UI layouts, banner displays, updates, wind direction display, victory check, and selections
-import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js?v=21';
-import { state, tanks, movementHighlights, projectiles, particles } from './state.js?v=21';
-import { getSurfaceY, generateTerrain, buildTerrainMesh } from './terrain.js?v=21';
-import { playSound } from './audio.js?v=21';
-import { spawnTanks } from './tank.js?v=21';
-import { initAuth, registerWithEmail, loginWithEmail, loginAnonymouslyAsGuest, logoutUser, getLeaderboard, recordMatchResult } from './auth.js?v=21';
-import { createLobby, joinLobby, leaveLobby } from './multiplayer.js?v=21';
+import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js?v=22';
+import { state, tanks, movementHighlights, projectiles, particles } from './state.js?v=22';
+import { getSurfaceY, generateTerrain, buildTerrainMesh } from './terrain.js?v=22';
+import { playSound } from './audio.js?v=22';
+import { spawnTanks } from './tank.js?v=22';
+import { initAuth, registerWithEmail, loginWithEmail, loginAnonymouslyAsGuest, logoutUser, getLeaderboard, recordMatchResult } from './auth.js?v=22';
+import { createLobby, joinLobby, leaveLobby, syncSelectedTank, syncPhase, syncActiveTankState } from './multiplayer.js?v=22';
+import { isPlaceholder } from './firebase-config.js?v=22';
 
 export function showAnnouncement(text) {
     const container = document.getElementById('announcement-text');
@@ -82,7 +83,17 @@ export function adjustCameraToFitTanks(tanksToFit) {
 
 export function selectTank(tank) {
     state.selectedTank = tank;
-    adjustCameraFocusOnTank(tank);
+    
+    if (state.isMultiplayer && state.activePlayer === state.localPlayerRole) {
+        syncSelectedTank(tank ? tank.id : null);
+        if (tank) {
+            syncActiveTankState();
+        }
+    }
+
+    if (tank) {
+        adjustCameraFocusOnTank(tank);
+    }
     updateUI();
 }
 
@@ -138,6 +149,10 @@ export function highlightPossibleMoves() {
 
 export function setPhase(newPhase) {
     state.currentPhase = newPhase;
+    
+    if (state.isMultiplayer && state.activePlayer === state.localPlayerRole) {
+        syncPhase(newPhase);
+    }
     
     if (newPhase === 'SELECT') {
         state.selectedTank = null;
@@ -667,6 +682,9 @@ export function startMultiplayerGame(seed) {
         selectTank(tanks[0]);
         setPhase('SELECT');
     } else {
+        // Player 2 client starts by viewing Player 1's tanks since Player 1 goes first
+        const p1Tanks = tanks.filter(t => t.player === 1);
+        adjustCameraToFitTanks(p1Tanks);
         updateUI();
     }
 }
@@ -716,7 +734,13 @@ export function setupMultiplayerUI() {
         if (errorMsg) {
             let msg = err.message || err || "Ein Fehler ist aufgetreten.";
             if (msg.includes("api-key-not-valid") || msg.includes("DummyKey") || msg.includes("API key not valid")) {
-                msg = "⚠️ Firebase API-Key ungültig! Bitte trage deine echten Firebase-Daten in index.html (Zeilen 19–27) ein. Eine Anleitung findest du in der Datei FIREBASE_SETUP.md.";
+                msg = "⚠️ Firebase API-Key ungültig! Bitte trage deine echten Firebase-Daten in index.html (Zeilen 37–45) ein. Eine Anleitung findest du in der Datei FIREBASE_SETUP.md.";
+            } else if (msg.includes("configuration-not-found")) {
+                msg = "⚠️ Firebase-Konfigurationsfehler! Entweder sind die Anmeldemethoden (z. B. 'Anonym') in der Firebase Console nicht unter 'Authentication' -> 'Anmeldemethode' aktiviert, oder deine Konfiguration in index.html ist inkorrekt. Details findest du in FIREBASE_SETUP.md.";
+            } else if (msg.includes("operation-not-allowed")) {
+                msg = "⚠️ Diese Anmeldemethode ist nicht erlaubt! Bitte aktiviere 'Anonym' in deiner Firebase Console unter 'Authentication' -> 'Anmeldemethode'.";
+            } else if (msg.includes("admin-restricted-operation")) {
+                msg = "⚠️ Registrierung eingeschränkt! Bitte gehe in deiner Firebase Console zu 'Authentication' -> 'Einstellungen' (Settings) -> 'Nutzeraktionen' (User actions) und aktiviere dort 'Erstellung (Registrierung) aktivieren' (Enable create (sign-up)).";
             }
             errorMsg.innerText = msg;
             errorMsg.classList.remove('hidden');
@@ -883,5 +907,9 @@ export function setupMultiplayerUI() {
                 console.error("Leave lobby error:", err);
             }
         });
+    }
+
+    if (isPlaceholder) {
+        showAuthError("⚠️ Du verwendest noch das Standard-Firebase-Projekt 'voxel-panzer'. Um Multiplayer spielen zu können, musst du deine eigenen Firebase-Projektdaten in die index.html (Zeilen 37–45) eintragen! Siehe FIREBASE_SETUP.md.");
     }
 }

@@ -5,14 +5,14 @@ export const BLOCK_SIZE = 2;
 
 export const PALETTE = {
     0: 0x000000, // Luft
-    1: 0x155e75, // Tiefes Gestein (Cyan-Blau)
-    2: 0x1e1b4b, // Abyssal-Block (Violett)
-    3: 0x4f46e5, // Tech-Grid Boden (Indigo)
-    4: 0x10b981, // Lebendige Energiekristalle (Smaragd)
-    5: 0x3b82f6, // Neon-Energieknoten
-    6: 0x0f172a, // Verbranntes Aschegestein (Schwarz)
-    7: 0x10b981, // Gehärteter Schutzschild Spieler 1 (Smaragd)
-    8: 0xf43f5e, // Gehärteter Schutzschild Spieler 2 (Rose-Rot)
+    1: 0x0d3d4f, // Tiefes Gestein (dunkles Cyan-Blau)
+    2: 0x12103a, // Abyssal-Block (dunkles Violett)
+    3: 0x2d2a8a, // Tech-Grid Boden (dunkles Indigo)
+    4: 0x0a6b4e, // Energiekristalle (dunkles Smaragd)
+    5: 0x1a4d9e, // Neon-Energieknoten (dunkles Blau)
+    6: 0x080e1a, // Verbranntes Aschegestein
+    7: 0x10b981, // Schutzschild Spieler 1
+    8: 0xf43f5e, // Schutzschild Spieler 2
 };
 
 export function getCardinalDirectionFromYaw(yaw, isForward = true) {

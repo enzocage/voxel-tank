@@ -1,6 +1,6 @@
 // Voxel Grid management and Terrain Generation
-import { GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, BLOCK_SIZE, PALETTE } from './constants.js?v=21';
-import { state } from './state.js?v=21';
+import { GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, BLOCK_SIZE, PALETTE } from './constants.js?v=22';
+import { state } from './state.js?v=22';
 
 export const voxelGrid = new Uint8Array(GRID_SIZE_X * GRID_SIZE_Y * GRID_SIZE_Z);
 
@@ -80,9 +80,9 @@ export function buildTerrainMesh() {
     }
 
     const geometry = new THREE.BoxGeometry(BLOCK_SIZE * 0.98, BLOCK_SIZE * 0.98, BLOCK_SIZE * 0.98); 
-    const material = new THREE.MeshStandardMaterial({ 
-        roughness: 0.7,
-        metalness: 0.2
+    const material = new THREE.MeshStandardMaterial({
+        roughness: 0.85,
+        metalness: 0.0
     });
 
     state.terrainInstancedMesh = new THREE.InstancedMesh(geometry, material, totalBlocks);

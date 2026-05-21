@@ -12,14 +12,32 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <!-- OrbitControls für Kameraführung -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- Post-Processing: Bloom, Chromatic Aberration, Vignette -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
     <!-- Spielspezifische Styles -->
     <link rel="stylesheet" href="css/style.css">
+    <!-- Vignette overlay -->
+    <style>
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 50%, transparent 52%, rgba(0,0,0,0.72) 100%);
+            pointer-events: none;
+            z-index: 5;
+        }
+    </style>
     <!-- Firebase Configuration (Replace with your own project credentials) -->
     <script>
         window.FIREBASE_CONFIG = {
             apiKey: "AIzaSyDaPRf3I-FvfBn-K0gVc9rHFmHy2DPCFKQ",
             authDomain: "voxel-panzer.firebaseapp.com",
-            databaseURL: "https://voxel-panzer-default-rtdb.firebaseio.com",
+            databaseURL: "https://voxel-panzer-default-rtdb.europe-west1.firebasedatabase.app",
             projectId: "voxel-panzer",
             storageBucket: "voxel-panzer.firebasestorage.app",
             messagingSenderId: "248616792045",
@@ -371,6 +389,6 @@
     </div>
 
     <!-- Modulares Game Script -->
-    <script type="module" src="js/main.js?v=21"></script>
+    <script type="module" src="js/main.js?v=22"></script>
 </body>
 </html>

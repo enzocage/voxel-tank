@@ -1,11 +1,11 @@
 // Online Multiplayer Matchmaking and State Synchronization Module
-import { db } from './firebase-config.js?v=21';
-import { state, tanks } from './state.js?v=21';
-import { getBlock, setBlock, buildTerrainMesh, getSurfaceY } from './terrain.js?v=21';
-import { playSound } from './audio.js?v=21';
-import { spawnExplosion } from './particles.js?v=21';
-import { Projectile } from './projectile.js?v=21';
-import { recordMatchResult } from './auth.js?v=21';
+import { db } from './firebase-config.js?v=22';
+import { state, tanks } from './state.js?v=22';
+import { getBlock, setBlock, buildTerrainMesh, getSurfaceY } from './terrain.js?v=22';
+import { playSound } from './audio.js?v=22';
+import { spawnExplosion } from './particles.js?v=22';
+import { Projectile } from './projectile.js?v=22';
+import { recordMatchResult } from './auth.js?v=22';
 import { 
     ref, 
     set, 
@@ -120,7 +120,7 @@ export async function joinLobby(lobbyId) {
     setupLobbyListeners(lobbyId);
 
     // Start the game for Player 2!
-    import('./ui.js?v=21').then(ui => {
+    import('./ui.js?v=22').then(ui => {
         ui.startMultiplayerGame(state.terrainSeed);
     });
 }
@@ -158,16 +158,16 @@ function setupLobbyListeners(lobbyId) {
             state.opponentUid = data.player2.uid;
             state.multiplayerStatus = 'playing';
             // Start the actual game! Trigger UI updates.
-            import('./ui.js?v=21').then(ui => {
+            import('./ui.js?v=22').then(ui => {
                 ui.showAnnouncement(`Spieler 2 (${state.opponentName}) beigetreten!`);
                 ui.startMultiplayerGame(state.terrainSeed);
             });
         }
         
         // Handle game phase changes from remote player
-        if (state.activePlayer !== state.localPlayerRole) {
+        if (data && data.activePlayer !== state.localPlayerRole) {
             if (data.currentPhase && data.currentPhase !== state.currentPhase) {
-                import('./ui.js?v=21').then(ui => {
+                import('./ui.js?v=22').then(ui => {
                     ui.setPhase(data.currentPhase);
                 });
             }
@@ -178,11 +178,11 @@ function setupLobbyListeners(lobbyId) {
             if (data.selectedTankId !== undefined) {
                 const foundTank = tanks.find(t => t.id === data.selectedTankId);
                 if (foundTank && state.selectedTank !== foundTank) {
-                    import('./ui.js?v=21').then(ui => {
+                    import('./ui.js?v=22').then(ui => {
                         ui.selectTank(foundTank);
                     });
                 } else if (data.selectedTankId === null && state.selectedTank !== null) {
-                    import('./ui.js?v=21').then(ui => {
+                    import('./ui.js?v=22').then(ui => {
                         ui.selectTank(null);
                     });
                 }
@@ -224,11 +224,11 @@ function setupLobbyListeners(lobbyId) {
                 
                 // Set correct weapon mode locally
                 state.shotMode = data.mode;
-                import('./ui.js?v=21').then(ui => ui.updateUI());
+                import('./ui.js?v=22').then(ui => ui.updateUI());
                 
                 if (data.mode === 'shield') {
                     // Shield is instantiated instantly
-                    import('./ui.js?v=21').then(ui => {
+                    import('./ui.js?v=22').then(ui => {
                         ui.deployShield(tank.mesh.position.x, tank.mesh.position.y, tank.mesh.position.z, state.activePlayer);
                     });
                 } else {
@@ -296,7 +296,7 @@ function setupLobbyListeners(lobbyId) {
                         // Spawn floating damage popup
                         if (prevHp > tank.hp) {
                             const loss = prevHp - tank.hp;
-                            import('./ui.js?v=21').then(ui => {
+                            import('./ui.js?v=22').then(ui => {
                                 ui.showDamagePopup(loss, tank.mesh, (tank.player === 1) ? 0x10b981 : 0xf43f5e);
                             });
                         }
@@ -311,7 +311,7 @@ function setupLobbyListeners(lobbyId) {
             }
             
             // Trigger UI and Victory Check
-            import('./ui.js?v=21').then(ui => {
+            import('./ui.js?v=22').then(ui => {
                 ui.updateUI();
                 ui.checkVictory();
             });
@@ -328,7 +328,7 @@ function setupLobbyListeners(lobbyId) {
             if (data.activePlayer !== state.activePlayer) {
                 state.windDirection = data.windDirection !== undefined ? data.windDirection : state.windDirection;
                 state.windSpeed = data.windSpeed !== undefined ? data.windSpeed : state.windSpeed;
-                import('./ui.js?v=21').then(ui => {
+                import('./ui.js?v=22').then(ui => {
                     ui.nextTurn(data.activePlayer);
                 });
             }
@@ -358,7 +358,7 @@ function setupLobbyListeners(lobbyId) {
 function handleOpponentDisconnect(reason) {
     if (state.multiplayerStatus === 'playing' && !state.isGameOver) {
         state.multiplayerStatus = 'disconnected';
-        import('./ui.js?v=21').then(async (ui) => {
+        import('./ui.js?v=22').then(async (ui) => {
             ui.showAnnouncement(reason);
             // Declare winner since opponent quit
             state.isGameOver = true;

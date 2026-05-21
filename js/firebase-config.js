@@ -7,7 +7,7 @@ import { getDatabase } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-
 const defaultFirebaseConfig = {
     apiKey: "AIzaSyDaPRf3I-FvfBn-K0gVc9rHFmHy2DPCFKQ",
     authDomain: "voxel-panzer.firebaseapp.com",
-    databaseURL: "https://voxel-panzer-default-rtdb.firebaseio.com",
+    databaseURL: "https://voxel-panzer-default-rtdb.europe-west1.firebasedatabase.app",
     projectId: "voxel-panzer",
     storageBucket: "voxel-panzer.firebasestorage.app",
     messagingSenderId: "248616792045",
@@ -22,7 +22,9 @@ let db;
 let isPlaceholder = true;
 
 try {
-    if (config.apiKey && !config.apiKey.includes("DummyKey")) {
+    if (config.apiKey && 
+        !config.apiKey.includes("DummyKey") && 
+        !config.apiKey.includes("YOUR_")) {
         isPlaceholder = false;
     }
     app = initializeApp(config);

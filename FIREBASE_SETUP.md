@@ -38,7 +38,7 @@ To play the 2-player Online Multiplayer mode, you need to link your own Firebase
 
 ## Step 5: Update index.html
 1. Open [index.html](file:///c:/Users/enzoc/Desktop/AI%20Code/tank%20antigravity/index.html) in your editor.
-2. Replace the dummy config (lines 19–27) with your copied config:
+2. Replace the dummy config (lines 37–45) with your copied config:
    ```html
    <script>
        window.FIREBASE_CONFIG = {

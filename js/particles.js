@@ -1,28 +1,22 @@
-// Particle systems (dust, sparks, explosions, trails)
-import { state, particles } from './state.js?v=21';
+// Particle systems and transient visual effects
+import { state, particles, effects } from './state.js?v=22';
 
 export class Particle {
     constructor(x, y, z, color, size, velocity, life) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-        this.vx = velocity.x;
-        this.vy = velocity.y;
-        this.vz = velocity.z;
+        this.x = x; this.y = y; this.z = z;
+        this.vx = velocity.x; this.vy = velocity.y; this.vz = velocity.z;
         this.color = color;
         this.maxLife = life;
         this.life = life;
 
         const geom = new THREE.BoxGeometry(size, size, size);
-        
-        const mat = new THREE.MeshStandardMaterial({ 
+        const mat = new THREE.MeshStandardMaterial({
             color: color,
             transparent: true,
             opacity: 1.0,
             emissive: color,
             emissiveIntensity: 0.8
         });
-        
         this.mesh = new THREE.Mesh(geom, mat);
         this.mesh.position.set(x, y, z);
         state.scene.add(this.mesh);
@@ -30,24 +24,88 @@ export class Particle {
 
     update(dt) {
         this.life -= dt;
-        this.vy -= 9.81 * dt; 
-
+        this.vy -= 9.81 * dt;
         this.x += this.vx * dt;
         this.y += this.vy * dt;
         this.z += this.vz * dt;
-
         this.mesh.position.set(this.x, this.y, this.z);
         this.mesh.material.opacity = Math.max(0, this.life / this.maxLife);
-
         this.mesh.rotation.x += this.vx * 0.15;
         this.mesh.rotation.y += this.vy * 0.15;
-
         if (this.life <= 0) {
             state.scene.remove(this.mesh);
+            this.mesh.geometry.dispose();
+            this.mesh.material.dispose();
             return false;
         }
         return true;
     }
+}
+
+// Transient visual effects (shockwave rings, fireballs, etc.)
+export class VisualEffect {
+    constructor(mesh, duration, onUpdate) {
+        this.mesh = mesh;
+        this.duration = duration;
+        this.elapsed = 0;
+        this.onUpdate = onUpdate;
+        state.scene.add(mesh);
+    }
+
+    update(dt) {
+        this.elapsed += dt;
+        const progress = Math.min(1.0, this.elapsed / this.duration);
+        this.onUpdate(this.mesh, progress);
+        if (progress >= 1.0) {
+            state.scene.remove(this.mesh);
+            this.mesh.geometry.dispose();
+            this.mesh.material.dispose();
+            return false;
+        }
+        return true;
+    }
+}
+
+export function spawnShockwave(x, y, z, color) {
+    const geom = new THREE.RingGeometry(0.1, 0.7, 36);
+    const mat = new THREE.MeshBasicMaterial({
+        color: color,
+        transparent: true,
+        opacity: 1.0,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+    });
+    const mesh = new THREE.Mesh(geom, mat);
+    mesh.position.set(x, y + 0.2, z);
+    mesh.rotation.x = -Math.PI / 2;
+
+    const effect = new VisualEffect(mesh, 0.55, (m, p) => {
+        const s = 1.0 + p * 13;
+        m.scale.set(s, s, 1);
+        m.material.opacity = (1.0 - p) * 0.85;
+    });
+    effects.push(effect);
+}
+
+export function spawnFireball(x, y, z, color) {
+    const geom = new THREE.SphereGeometry(0.8, 10, 10);
+    const mat = new THREE.MeshBasicMaterial({
+        color: color,
+        transparent: true,
+        opacity: 0.75,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+    });
+    const mesh = new THREE.Mesh(geom, mat);
+    mesh.position.set(x, y, z);
+
+    const effect = new VisualEffect(mesh, 0.48, (m, p) => {
+        const s = 0.5 + p * 3.5;
+        m.scale.setScalar(s);
+        m.material.opacity = (1.0 - p) * 0.68;
+    });
+    effects.push(effect);
 }
 
 export function spawnDebrisParticle(x, y, z, color) {
@@ -64,7 +122,7 @@ export function spawnDebrisParticle(x, y, z, color) {
 export function spawnTrailParticle(x, y, z) {
     const size = 0.2;
     const life = 0.45;
-    const velocity = { x: (Math.random()-0.5)*1, y: 0.3, z: (Math.random()-0.5)*1 };
+    const velocity = { x: (Math.random() - 0.5) * 1, y: 0.3, z: (Math.random() - 0.5) * 1 };
     particles.push(new Particle(x, y, z, 0x06b6d4, size, velocity, life));
 }
 
@@ -87,24 +145,19 @@ export function spawnExplosion(pos, color, count) {
         const life = 0.9 + Math.random() * 0.9;
         const theta = Math.random() * Math.PI * 2;
         const phi = Math.acos((Math.random() * 2) - 1);
-        
         const speed = 4 + Math.random() * 10;
         const velocity = {
             x: Math.sin(phi) * Math.cos(theta) * speed,
             y: Math.abs(Math.sin(phi) * Math.sin(theta) * speed) + 3,
             z: Math.cos(phi) * speed
         };
-
-        const particleColor = Math.random() < 0.5 ? color : 0xf59e0b; 
+        const particleColor = Math.random() < 0.5 ? color : 0xf59e0b;
         particles.push(new Particle(pos.x, pos.y, pos.z, particleColor, size, velocity, life));
     }
 }
 
 export function spawnHitParticles(x, y, z, color) {
-    // 1. Spawns standard debris/damage particles
     spawnDamageParticles(x, y, z, color);
-    
-    // 2. Add some high-energy glowing sparks (white, gold/orange, and neon player color)
     const colors = [0xffffff, 0xffb703, color];
     for (let i = 0; i < 20; i++) {
         const size = 0.08 + Math.random() * 0.12;
