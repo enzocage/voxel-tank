@@ -1,11 +1,11 @@
 // Projectile logic, movement, and terrain destruction
-import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, PALETTE } from './constants.js?v=5';
-import { state, projectiles, tanks } from './state.js?v=5';
-import { getBlock, setBlock, buildTerrainMesh } from './terrain.js?v=5';
-import { playSound } from './audio.js?v=5';
-import { spawnExplosion, spawnDebrisParticle, spawnTrailParticle } from './particles.js?v=5';
-import { applyGravityToTanks } from './tank.js?v=5';
-import { nextTurn, showAnnouncement } from './ui.js?v=5';
+import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, PALETTE } from './constants.js?v=6';
+import { state, projectiles, tanks } from './state.js?v=6';
+import { getBlock, setBlock, buildTerrainMesh } from './terrain.js?v=6';
+import { playSound } from './audio.js?v=6';
+import { spawnExplosion, spawnDebrisParticle, spawnTrailParticle } from './particles.js?v=6';
+import { applyGravityToTanks } from './tank.js?v=6';
+import { nextTurn, showAnnouncement } from './ui.js?v=6';
 
 export class Projectile {
     constructor(startX, startY, startZ, velocity, shooterTank) {

@@ -1,9 +1,9 @@
 // Keyboard, Mouse, and Touch input handling
-import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js?v=5';
-import { state, tanks, projectiles } from './state.js?v=5';
-import { getSurfaceY } from './terrain.js?v=5';
-import { playSound } from './audio.js?v=5';
-import { Projectile } from './projectile.js?v=5';
+import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js?v=6';
+import { state, tanks, projectiles } from './state.js?v=6';
+import { getSurfaceY } from './terrain.js?v=6';
+import { playSound } from './audio.js?v=6';
+import { Projectile } from './projectile.js?v=6';
 import { 
     setPhase, 
     selectTank, 
@@ -11,7 +11,7 @@ import {
     highlightPossibleMoves, 
     clearHighlights,
     adjustCameraFocusOnTank
-} from './ui.js?v=5';
+} from './ui.js?v=6';
 
 export function attemptStep(dx, dz) {
     if (!state.selectedTank || state.actionsRemaining <= 0) return;
@@ -164,15 +164,9 @@ export function setupInput() {
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
-    window.addEventListener('mousedown', (e) => {
-        if (e.target.tagName === 'BUTTON' || e.target.closest('#ui-container') || e.target.closest('button')) {
-            return;
-        }
-
-        if (e.button !== 0) return; 
-
-        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    function handleSelectClick(clientX, clientY) {
+        mouse.x = (clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(clientY / window.innerHeight) * 2 + 1;
 
         raycaster.setFromCamera(mouse, state.camera);
         
@@ -199,6 +193,27 @@ export function setupInput() {
             } else {
                 selectTank(clickedTank);
             }
+        }
+    }
+
+    window.addEventListener('mousedown', (e) => {
+        if (e.target.tagName === 'BUTTON' || e.target.closest('#ui-container') || e.target.closest('button')) {
+            return;
+        }
+
+        if (e.button !== 0) return; 
+
+        handleSelectClick(e.clientX, e.clientY);
+    });
+
+    window.addEventListener('touchstart', (e) => {
+        if (e.target.tagName === 'BUTTON' || e.target.closest('#ui-container') || e.target.closest('button')) {
+            return;
+        }
+
+        if (e.touches.length > 0) {
+            const touch = e.touches[0];
+            handleSelectClick(touch.clientX, touch.clientY);
         }
     });
 }

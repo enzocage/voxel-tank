@@ -1,8 +1,8 @@
 // UI layouts, banner displays, updates, wind direction display, victory check, and selections
-import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js?v=5';
-import { state, tanks, movementHighlights } from './state.js?v=5';
-import { getSurfaceY } from './terrain.js?v=5';
-import { playSound } from './audio.js?v=5';
+import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js?v=6';
+import { state, tanks, movementHighlights } from './state.js?v=6';
+import { getSurfaceY } from './terrain.js?v=6';
+import { playSound } from './audio.js?v=6';
 
 export function showAnnouncement(text) {
     const container = document.getElementById('announcement-text');
@@ -28,6 +28,50 @@ export function adjustCameraFocusOnTank(tank) {
         tankWorldX + (directionMultiplier * 14), 
         tankWorldY + 8,                          
         tankWorldZ + (Math.sin(tank.id) * 3)     
+    );
+
+    state.cameraTransitioning = true;
+}
+
+export function adjustCameraToFitTanks(tanksToFit) {
+    if (!tanksToFit || tanksToFit.length === 0) return;
+
+    let minX = Infinity, maxX = -Infinity;
+    let minY = Infinity, maxY = -Infinity;
+    let minZ = Infinity, maxZ = -Infinity;
+
+    tanksToFit.forEach(tank => {
+        const tx = tank.x * BLOCK_SIZE;
+        const ty = (tank.y - 0.5) * BLOCK_SIZE;
+        const tz = tank.z * BLOCK_SIZE;
+        if (tx < minX) minX = tx;
+        if (tx > maxX) maxX = tx;
+        if (ty < minY) minY = ty;
+        if (ty > maxY) maxY = ty;
+        if (tz < minZ) minZ = tz;
+        if (tz > maxZ) maxZ = tz;
+    });
+
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+    const centerZ = (minZ + maxZ) / 2;
+
+    state.camTargetLook.set(centerX, centerY + 0.5, centerZ);
+
+    const dx = maxX - minX;
+    const dy = maxY - minY;
+    const dz = maxZ - minZ;
+    const size = Math.sqrt(dx*dx + dy*dy + dz*dz);
+
+    const directionMultiplier = (state.activePlayer === 1) ? -1 : 1;
+    
+    // Scale distance based on boundary size to frame all tanks as big as possible
+    const distance = Math.max(size * 1.25, 20.0);
+
+    state.camTargetPos.set(
+        centerX + (directionMultiplier * distance * 0.8),
+        centerY + Math.max(distance * 0.5, 9.0),
+        centerZ + (distance * 0.3)
     );
 
     state.cameraTransitioning = true;
@@ -97,6 +141,10 @@ export function setPhase(newPhase) {
         state.actionsRemaining = 15;
         clearHighlights();
         showAnnouncement(`Spieler ${state.activePlayer}: Wähle einen Panzer!`);
+        
+        // Fit all active player's tanks in camera view
+        const activeTanks = tanks.filter(t => t.player === state.activePlayer);
+        adjustCameraToFitTanks(activeTanks);
     } 
     else if (newPhase === 'MOVE') {
         state.actionsRemaining = 15;
