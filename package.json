@@ -1,0 +1,7 @@
+{
+  "name": "voxel-panzer-3d",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "npx serve . -p 3000"
+  }
+}

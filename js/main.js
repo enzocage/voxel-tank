@@ -1,12 +1,12 @@
 // Main Three.js setup, environment generation, and game loop
-import { GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, BLOCK_SIZE } from './constants.js?v=22';
-import { state, tanks, projectiles, particles, effects } from './state.js?v=22';
-import { generateTerrain, buildTerrainMesh, getBlock, setBlock } from './terrain.js?v=22';
-import { audioState, playSound, soundtrack, toggleSoundtrack, setSoundtrackVolume, startEngineHum, stopEngineHum } from './audio.js?v=22';
-import { spawnTanks, applyGravityToTanks } from './tank.js?v=22';
-import { setupInput, startCharging, fireProjectile } from './input.js?v=22';
-import { updateWindUI, setPhase, selectTank, nextTurn, updateUI, highlightPossibleMoves, setupMultiplayerUI } from './ui.js?v=22';
-import { syncActiveTankState, syncNextTurn } from './multiplayer.js?v=22';
+import { GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, BLOCK_SIZE } from './constants.js?v=23';
+import { state, tanks, projectiles, particles, effects } from './state.js?v=23';
+import { generateTerrain, buildTerrainMesh, getBlock, setBlock } from './terrain.js?v=23';
+import { audioState, playSound, soundtrack, toggleSoundtrack, setSoundtrackVolume, startEngineHum, stopEngineHum } from './audio.js?v=23';
+import { spawnTanks, applyGravityToTanks } from './tank.js?v=23';
+import { setupInput, startCharging, fireProjectile } from './input.js?v=23';
+import { updateWindUI, setPhase, selectTank, nextTurn, updateUI, highlightPossibleMoves, setupMultiplayerUI } from './ui.js?v=23';
+import { syncActiveTankState, syncNextTurn } from './multiplayer.js?v=23';
 
 let clock = new THREE.Clock();
 
@@ -592,7 +592,11 @@ function animate() {
     if (state.cameraLerpTarget) {
         const targetPos = new THREE.Vector3();
         state.cameraLerpTarget.getWorldPosition(targetPos);
-        const offset = new THREE.Vector3(-8, 5, -8);
+        
+        // Mirror the projectile tracking camera offset depending on local player side
+        const localMultiplier = (state.isMultiplayer && state.localPlayerRole === 2) ? 1 : -1;
+        const offset = new THREE.Vector3(8 * localMultiplier, 5, 8 * localMultiplier);
+        
         state.camera.position.lerp(targetPos.clone().add(offset), 0.1);
         state.controls.target.lerp(targetPos, 0.1);
     } else if (state.cameraTransitioning) {
@@ -688,6 +692,24 @@ function setupUIEventListeners() {
         });
     }
 
+    const helpOverlay = document.getElementById('help-overlay');
+    const btnOpenHelp = document.getElementById('btn-open-help');
+    const btnCloseHelp = document.getElementById('btn-close-help');
+    if (btnOpenHelp && helpOverlay) {
+        btnOpenHelp.addEventListener('click', () => { playSound('click'); helpOverlay.style.display = 'flex'; });
+        btnCloseHelp?.addEventListener('click', () => { playSound('click'); helpOverlay.style.display = 'none'; });
+        helpOverlay.addEventListener('click', (e) => { if (e.target === helpOverlay) helpOverlay.style.display = 'none'; });
+    }
+
+    const onlineOverlay = document.getElementById('online-overlay');
+    const btnOpenOnline = document.getElementById('btn-open-online');
+    const btnCloseOnline = document.getElementById('btn-close-online');
+    if (btnOpenOnline && onlineOverlay) {
+        btnOpenOnline.addEventListener('click', () => { playSound('click'); onlineOverlay.style.display = 'flex'; });
+        btnCloseOnline?.addEventListener('click', () => { playSound('click'); onlineOverlay.style.display = 'none'; });
+        onlineOverlay.addEventListener('click', (e) => { if (e.target === onlineOverlay) onlineOverlay.style.display = 'none'; });
+    }
+
     document.querySelectorAll('.panel-toggle-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -708,7 +730,7 @@ function startApp() {
     updateWindUI();
     setupUIEventListeners();
 
-    if (tanks.length > 0) { selectTank(tanks[0]); setPhase('SELECT'); }
+    if (tanks.length > 0) { setPhase('SELECT'); }
     animate();
 }
 

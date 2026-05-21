@@ -1,12 +1,12 @@
 // UI layouts, banner displays, updates, wind direction display, victory check, and selections
-import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js?v=22';
-import { state, tanks, movementHighlights, projectiles, particles } from './state.js?v=22';
-import { getSurfaceY, generateTerrain, buildTerrainMesh } from './terrain.js?v=22';
-import { playSound } from './audio.js?v=22';
-import { spawnTanks } from './tank.js?v=22';
-import { initAuth, registerWithEmail, loginWithEmail, loginAnonymouslyAsGuest, logoutUser, getLeaderboard, recordMatchResult } from './auth.js?v=22';
-import { createLobby, joinLobby, leaveLobby, syncSelectedTank, syncPhase, syncActiveTankState } from './multiplayer.js?v=22';
-import { isPlaceholder } from './firebase-config.js?v=22';
+import { BLOCK_SIZE, GRID_SIZE_X, GRID_SIZE_Z, getCardinalDirectionFromYaw } from './constants.js?v=23';
+import { state, tanks, movementHighlights, projectiles, particles } from './state.js?v=23';
+import { getSurfaceY, generateTerrain, buildTerrainMesh } from './terrain.js?v=23';
+import { playSound } from './audio.js?v=23';
+import { spawnTanks } from './tank.js?v=23';
+import { initAuth, registerWithEmail, loginWithEmail, loginAnonymouslyAsGuest, logoutUser, getLeaderboard, recordMatchResult } from './auth.js?v=23';
+import { createLobby, joinLobby, leaveLobby, syncSelectedTank, syncPhase, syncActiveTankState } from './multiplayer.js?v=23';
+import { isPlaceholder } from './firebase-config.js?v=23';
 
 export function showAnnouncement(text) {
     const container = document.getElementById('announcement-text');
@@ -21,24 +21,45 @@ export function showAnnouncement(text) {
 }
 
 export function adjustCameraFocusOnTank(tank) {
+    state.cameraLerpTarget = null;      // override projectile action-cam immediately
+    state.impactCameraTarget = null;
+    state.impactCameraTimer = null;
+
     const tankWorldX = tank.x * BLOCK_SIZE;
     const tankWorldY = (tank.y - 0.5) * BLOCK_SIZE;
     const tankWorldZ = tank.z * BLOCK_SIZE;
 
     state.camTargetLook.set(tankWorldX, tankWorldY + 0.5, tankWorldZ);
 
-    const directionMultiplier = (tank.player === 1) ? -1 : 1;
-    state.camTargetPos.set(
-        tankWorldX + (directionMultiplier * 14), 
-        tankWorldY + 8,                          
-        tankWorldZ + (Math.sin(tank.id) * 3)     
-    );
+    if (state.isMultiplayer && state.playerRoleState === 'passive') {
+        // Taktischer Drohnen-Winkel aus Perspektive des passiven Spielers
+        const localMultiplier = (state.localPlayerRole === 1) ? -1 : 1;
+        state.camTargetPos.set(
+            tankWorldX + (localMultiplier * 22), // Größerer Abstand für besseren Überblick
+            tankWorldY + 12,                    // Höherer Winkel
+            tankWorldZ + 6                       // Schräger Winkel für Tiefe
+        );
+    } else {
+        // Normale Third-Person-Steuerungsansicht des aktiven Spielers
+        const directionMultiplier = (tank.player === 1) ? -1 : 1;
+        state.camTargetPos.set(
+            tankWorldX + (directionMultiplier * 14),
+            tankWorldY + 8,
+            tankWorldZ + (Math.sin(tank.id) * 3)
+        );
+    }
 
     state.cameraTransitioning = true;
+    console.log('[CAM] adjustCameraFocusOnTank → tank', tank.id, 'player', tank.player, 'role', state.playerRoleState, '| lerpTarget?', !!state.cameraLerpTarget, '| targetPos', state.camTargetPos.toArray().map(v=>v.toFixed(1)));
 }
 
 export function adjustCameraToFitTanks(tanksToFit) {
-    if (!tanksToFit || tanksToFit.length === 0) return;
+    console.log('[CAM] adjustCameraToFitTanks called | tanks:', tanksToFit?.length, '| lerpTarget?', !!state.cameraLerpTarget, '| activePlayer:', state.activePlayer);
+    if (!tanksToFit || tanksToFit.length === 0) { console.warn('[CAM] adjustCameraToFitTanks: EMPTY tank list → returning early, no transition!'); return; }
+
+    state.cameraLerpTarget = null;      // override projectile action-cam immediately
+    state.impactCameraTarget = null;
+    state.impactCameraTimer = null;
 
     let minX = Infinity, maxX = -Infinity;
     let minY = Infinity, maxY = -Infinity;
@@ -67,18 +88,31 @@ export function adjustCameraToFitTanks(tanksToFit) {
     const dz = maxZ - minZ;
     const size = Math.sqrt(dx*dx + dy*dy + dz*dz);
 
-    const directionMultiplier = (state.activePlayer === 1) ? -1 : 1;
+    const directionMultiplier = (state.isMultiplayer && state.localPlayerRole !== null)
+        ? ((state.localPlayerRole === 1) ? -1 : 1)
+        : ((state.activePlayer === 1) ? -1 : 1);
     
     // Scale distance based on boundary size to frame all tanks as big as possible
     const distance = Math.max(size * 1.25, 20.0);
 
-    state.camTargetPos.set(
-        centerX + (directionMultiplier * distance * 0.8),
-        centerY + Math.max(distance * 0.5, 9.0),
-        centerZ + (distance * 0.3)
-    );
+    if (state.isMultiplayer && state.playerRoleState === 'passive') {
+        // Taktische Übersicht aus Sichtseite des passiven Spielers
+        state.camTargetPos.set(
+            centerX + (directionMultiplier * distance * 1.0),
+            centerY + Math.max(distance * 0.7, 13.0),
+            centerZ + (distance * 0.4)
+        );
+    } else {
+        // Normale aktive Übersicht
+        state.camTargetPos.set(
+            centerX + (directionMultiplier * distance * 0.8),
+            centerY + Math.max(distance * 0.5, 9.0),
+            centerZ + (distance * 0.3)
+        );
+    }
 
     state.cameraTransitioning = true;
+    console.log('[CAM] adjustCameraToFitTanks → transition SET | targetPos', state.camTargetPos.toArray().map(v=>v.toFixed(1)));
 }
 
 export function selectTank(tank) {
@@ -350,6 +384,21 @@ export function updateUI() {
             btnSkipTurn.className = "bg-slate-800 text-slate-500 text-[10px] px-2 py-1.5 rounded-md font-bold cursor-not-allowed border border-slate-700 tech-font";
         }
         shootPanel.classList.add('opacity-50');
+
+        // Observer feedback adjustments
+        if (phaseBadge) {
+            phaseBadge.innerText = "Zuschauer-Modus";
+            phaseBadge.className = "cyber-font text-[10px] text-indigo-400 font-bold mt-1 px-2 py-0.5 bg-indigo-950/40 rounded-full border border-indigo-500/30 inline-block uppercase tracking-wider animate-pulse";
+        }
+        if (actionsLeftLabel) {
+            actionsLeftLabel.innerText = `${state.opponentName || 'Gegner'} ist am Zug...`;
+        }
+        if (controlsHelp) {
+            controlsHelp.innerHTML = `
+                <li class="text-slate-400 font-medium"><i class="fas fa-eye mr-1"></i> Du schaust gerade zu.</li>
+                <li>Die Kamera folgt den Aktionen des Gegners aus deiner Perspektive.</li>
+            `;
+        }
     }
 }
 
@@ -373,6 +422,7 @@ export function updateWindUI() {
 }
 
 export function nextTurn(targetPlayer = null) {
+    console.log('[CAM] nextTurn called | targetPlayer:', targetPlayer, '| currentActivePlayer:', state.activePlayer, '| isGameOver:', state.isGameOver);
     if (state.isGameOver) return;
 
     if (targetPlayer !== null) {
@@ -380,6 +430,13 @@ export function nextTurn(targetPlayer = null) {
     } else {
         state.activePlayer = state.activePlayer === 1 ? 2 : 1;
     }
+
+    if (state.isMultiplayer) {
+        state.playerRoleState = (state.activePlayer === state.localPlayerRole) ? 'active' : 'passive';
+    } else {
+        state.playerRoleState = 'active';
+    }
+
     state.shotMode = 'sub'; // Reset shotMode to sub on every new turn!
     tickActiveShields(state.activePlayer);
 
@@ -407,6 +464,7 @@ export function nextTurn(targetPlayer = null) {
     }, 1200);
 
     // Phase auf Auswahl zurücksetzen
+    console.log('[CAM] nextTurn → calling setPhase(SELECT) | activePlayer now:', state.activePlayer);
     setPhase('SELECT');
 }
 
@@ -679,9 +737,10 @@ export function startMultiplayerGame(seed) {
 
     // If local player is player 1, select first tank
     if (state.localPlayerRole === 1 && tanks.length > 0) {
-        selectTank(tanks[0]);
+        state.playerRoleState = 'active';
         setPhase('SELECT');
     } else {
+        state.playerRoleState = 'passive';
         // Player 2 client starts by viewing Player 1's tanks since Player 1 goes first
         const p1Tanks = tanks.filter(t => t.player === 1);
         adjustCameraToFitTanks(p1Tanks);
@@ -696,20 +755,27 @@ export function setupMultiplayerUI() {
     const panelMultiplayer = document.getElementById('panel-multiplayer');
 
     if (tabLocal && tabMultiplayer && panelLocal && panelMultiplayer) {
+        const mpInactive = () => {
+            tabMultiplayer.className = "flex-1 py-2.5 cyber-font text-[10px] font-bold tracking-wider tab-mp-blink flex items-center justify-center gap-2";
+            tabMultiplayer.innerHTML = '<span class="h-2 w-2 rounded-full bg-current animate-ping flex-shrink-0"></span>ONLINE&nbsp;MULTIPLAYER<span class="h-2 w-2 rounded-full bg-current animate-ping flex-shrink-0"></span>';
+        };
+        const mpActive = () => {
+            tabMultiplayer.className = "flex-1 py-2.5 text-center cyber-font text-[10px] font-bold text-indigo-400 border-b-2 border-indigo-500 tracking-wider";
+            tabMultiplayer.textContent = "ONLINE MULTIPLAYER";
+        };
+
         tabLocal.addEventListener('click', () => {
             playSound('click');
             tabLocal.className = "flex-1 py-2 text-center cyber-font text-[9px] font-bold text-indigo-400 border-b-2 border-indigo-500 tracking-wider";
-            tabMultiplayer.className = "flex-1 py-2 text-center cyber-font text-[9px] font-bold text-slate-400 border-b-2 border-transparent tracking-wider";
-            panelLocal.classList.remove('hidden');
+            mpInactive();
             panelMultiplayer.classList.add('hidden');
         });
 
         tabMultiplayer.addEventListener('click', () => {
             playSound('click');
-            tabMultiplayer.className = "flex-1 py-2 text-center cyber-font text-[9px] font-bold text-indigo-400 border-b-2 border-indigo-500 tracking-wider";
+            mpActive();
             tabLocal.className = "flex-1 py-2 text-center cyber-font text-[9px] font-bold text-slate-400 border-b-2 border-transparent tracking-wider";
             panelMultiplayer.classList.remove('hidden');
-            panelLocal.classList.add('hidden');
         });
     }
 
@@ -847,7 +913,7 @@ export function setupMultiplayerUI() {
             if (emailInput) emailInput.value = '';
             if (passInput) passInput.value = '';
             authContainer?.classList.remove('hidden');
-            lobbyContainer?.classList.add('hidden');
+            lobbyContainer?.classList.remove('hidden');
             waitingContainer?.classList.add('hidden');
         }
     });

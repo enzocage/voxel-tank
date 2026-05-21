@@ -195,7 +195,7 @@
                         <button id="shoot-button" disabled class="flex-grow cyber-font text-[8px] font-bold bg-slate-800 text-slate-500 py-1.5 rounded-lg shadow-md tracking-wider border border-slate-700 cursor-not-allowed">
                             ERST BEWEGUNG ABSCHLIESSEN
                         </button>
-                        <button id="btn-toggle-mode" class="flex-shrink-0 cyber-font text-[8px] font-bold py-1.5 px-3 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-rose-950/40 text-rose-400 border-rose-500/30 hover:bg-rose-900/40 hover:border-rose-500/50 shadow-[0_0_8px_rgba(244,63,94,0.2)]">
+                        <button id="btn-toggle-mode" class="flex-shrink-0 cyber-font text-[8px] font-bold py-1.5 px-3 rounded-lg shadow-md tracking-wider border cursor-pointer transition-all duration-300 bg-rose-950/40 text-rose-400 border-rose-500/30 hover:bg-rose-900/40 hover:border-rose-500/50 shadow-[0_0_8px_rgba(244,63,94,0.2)] btn-mode-glow">
                             SUB
                         </button>
                     </div>
@@ -243,152 +243,158 @@
         </div>
     </div>
 
-    <!-- Intro / Hilfe Modal beim Start -->
-    <div id="intro-modal" class="fixed inset-0 bg-slate-950/98 flex flex-col items-center justify-center z-50 transition-all duration-500">
-        <div class="cyber-panel border border-indigo-500/50 rounded-2xl p-6 max-w-md w-full shadow-2xl mx-4">
-            <div class="flex flex-col items-center gap-2 mb-4">
-                <div class="h-12 w-12 bg-indigo-600/20 border border-indigo-500/30 rounded-xl flex items-center justify-center animate-pulse">
-                    <i class="fa-solid fa-atom text-indigo-400 text-xl"></i>
-                </div>
-                <h1 class="cyber-font text-base font-black text-slate-100 tracking-[0.2em] text-center">VOXEL PANZER 3D</h1>
-                <span class="tech-font text-[9px] text-indigo-400 font-bold tracking-widest uppercase">Space Tactical Combat - 3-Phasen Edition</span>
-            </div>
-            
-            <!-- Tabs für Modus-Auswahl -->
-            <div id="intro-tabs" class="flex border-b border-slate-800 mb-4">
-                <button id="tab-local" class="flex-1 py-2 text-center cyber-font text-[9px] font-bold text-indigo-400 border-b-2 border-indigo-500 tracking-wider">
-                    LOKALES SPIEL
+    <!-- Intro / Start Screen -->
+    <div id="intro-modal" class="fixed inset-0 flex flex-col items-center justify-center z-50 transition-all duration-500">
+
+        <!-- Zentrierter Bereich: wechselt zwischen Buttons und Help-Inhalt -->
+        <div id="start-button-group" class="flex flex-col items-center gap-4 w-full max-w-lg px-6">
+            <h1 class="cyber-font text-3xl md:text-4xl font-black text-white tracking-[0.2em] drop-shadow-[0_2px_24px_rgba(0,0,0,1)] text-center">VOXEL TANK</h1>
+            <p class="tech-font text-[11px] text-indigo-200 font-bold tracking-widest uppercase drop-shadow-md mb-1">Space Tactical Combat · 3-Phasen Edition</p>
+
+            <!-- Standard-Ansicht: 3 pulsierende Buttons -->
+            <div id="start-buttons-view" class="flex flex-col items-center gap-5 w-full">
+                <button id="btn-start-game"
+                    onclick="document.getElementById('intro-modal').classList.add('opacity-0','pointer-events-none');window.dispatchEvent(new Event('resize'))"
+                    class="cyber-font text-sm bg-emerald-600/80 hover:bg-emerald-500 text-white font-bold py-3 w-48 rounded-lg cursor-pointer tracking-widest border border-emerald-400/30 btn-start-glow">
+                    LOKAL
                 </button>
-                <button id="tab-multiplayer" class="flex-1 py-2 text-center cyber-font text-[9px] font-bold text-slate-400 border-b-2 border-transparent tracking-wider">
-                    ONLINE MULTIPLAYER
+                <button id="btn-open-help"
+                    onclick="document.getElementById('start-buttons-view').style.display='none';document.getElementById('start-help-view').style.display='flex'"
+                    class="cyber-font text-sm bg-indigo-700/70 hover:bg-indigo-600 text-white font-bold py-3 w-48 rounded-lg cursor-pointer tracking-widest border border-indigo-400/30 btn-help-glow">
+                    HELP
+                </button>
+                <button id="btn-open-online"
+                    onclick="document.getElementById('start-buttons-view').style.display='none';document.getElementById('start-online-view').style.display='flex'"
+                    class="cyber-font text-sm font-bold py-3 w-48 rounded-lg cursor-pointer tracking-widest btn-online-glow">
+                    ONLINE
                 </button>
             </div>
 
-            <!-- Panel 1: LOKAL -->
-            <div id="panel-local" class="space-y-4">
-                <div class="space-y-2 text-[11px] text-slate-300 tech-font leading-relaxed max-h-60 overflow-y-auto pr-1">
-                    <p class="border-b border-slate-800 pb-1 text-indigo-300 cyber-font text-[10px] font-bold tracking-wider">NEUE 3-PHASEN MECHANIK:</p>
-                    <ul class="list-disc list-inside space-y-1">
-                        <li><strong class="text-amber-400">Phase 1 - Wählen:</strong> Klicke einen deiner Panzer an, um den Zug zu starten.</li>
-                        <li><strong class="text-cyan-400">Phase 2 - Fahren:</strong> Fahre mit <strong class="text-white">W/S</strong> vorwärts/rückwärts in Schussrichtung, rotiere mit <strong class="text-white">A/D</strong>. Drücke <strong class="text-white">Leertaste</strong> zum Beenden.</li>
-                        <li><strong class="text-purple-400">Phase 3 - Zielen:</strong> Justiere Turm und Neigung mit <strong class="text-white">WASD</strong>. Halte die <strong class="text-white">Leertaste</strong> zum Aufladen des Schusses gedrückt.</li>
-                    </ul>
-                    <p class="border-t border-slate-800 pt-2 text-indigo-300 cyber-font text-[10px] font-bold tracking-wider mt-2">TACTICAL SHOT MODES:</p>
-                    <ul class="list-disc list-inside space-y-1">
-                        <li><strong class="text-rose-400">SUB:</strong> Zerstörerischer Voxel-Sprengschuss.</li>
-                        <li><strong class="text-emerald-400">ADD:</strong> Erzeugt einen konstruktiven Kristalldom (2x größer & animiert).</li>
-                        <li><strong class="text-violet-400">WALL:</strong> Baut eine orthogonale Schutzwand (max. 3, Voxel-Animation).</li>
-                        <li><strong class="text-cyan-400">SHIELD:</strong> Kuppelschild (10 Voxel ø, 10 Runden, einmalig, animiert). Schützt Panzer vor äußeren Treffern; Schießen nach außen möglich!</li>
-                    </ul>
+            <!-- Help-Ansicht (erscheint anstatt der Buttons, zentriert) -->
+            <div id="start-help-view" class="flex-col items-center w-full" style="display:none">
+                <div id="panel-local" class="cyber-panel cyber-panel-modal rounded-xl p-4 w-full overflow-y-auto" style="max-height:52vh">
+                    <div class="space-y-2 text-[11px] text-slate-300 tech-font leading-relaxed">
+                        <p class="border-b border-slate-800 pb-1 text-indigo-300 cyber-font text-[10px] font-bold tracking-wider">NEUE 3-PHASEN MECHANIK:</p>
+                        <ul class="list-disc list-inside space-y-1">
+                            <li><strong class="text-amber-400">Phase 1 - Wählen:</strong> Klicke einen deiner Panzer an, um den Zug zu starten.</li>
+                            <li><strong class="text-cyan-400">Phase 2 - Fahren:</strong> Fahre mit <strong class="text-white">W/S</strong> vorwärts/rückwärts in Schussrichtung, rotiere mit <strong class="text-white">A/D</strong>. Drücke <strong class="text-white">Leertaste</strong> zum Beenden.</li>
+                            <li><strong class="text-purple-400">Phase 3 - Zielen:</strong> Justiere Turm und Neigung mit <strong class="text-white">WASD</strong>. Halte die <strong class="text-white">Leertaste</strong> zum Aufladen des Schusses gedrückt.</li>
+                        </ul>
+                        <p class="border-t border-slate-800 pt-2 text-indigo-300 cyber-font text-[10px] font-bold tracking-wider mt-2">TACTICAL SHOT MODES:</p>
+                        <ul class="list-disc list-inside space-y-1">
+                            <li><strong class="text-rose-400">SUB:</strong> Zerstörerischer Voxel-Sprengschuss.</li>
+                            <li><strong class="text-emerald-400">ADD:</strong> Erzeugt einen konstruktiven Kristalldom (2x größer &amp; animiert).</li>
+                            <li><strong class="text-violet-400">WALL:</strong> Baut eine orthogonale Schutzwand (max. 3, Voxel-Animation).</li>
+                            <li><strong class="text-cyan-400">SHIELD:</strong> Kuppelschild (10 Voxel ø, 10 Runden, einmalig, animiert). Schützt Panzer vor äußeren Treffern; Schießen nach außen möglich!</li>
+                        </ul>
+                    </div>
                 </div>
-                <div class="flex justify-center pt-2">
-                    <button id="btn-start-game" class="cyber-font text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-8 rounded-lg shadow-lg cursor-pointer transform active:scale-95 transition-all tracking-widest border border-emerald-400/20">
-                        SYSTEM INITIATION (LOKAL)
-                    </button>
-                </div>
+                <button onclick="document.getElementById('start-help-view').style.display='none';document.getElementById('start-buttons-view').style.display='flex'"
+                    class="cyber-font text-[9px] mt-3 bg-slate-800/70 text-slate-300 font-bold py-2 px-8 rounded-lg cursor-pointer tracking-widest border border-slate-500/40 btn-back-glow">
+                    ← ZURÜCK
+                </button>
             </div>
 
-            <!-- Panel 2: ONLINE MULTIPLAYER -->
-            <div id="panel-multiplayer" class="hidden space-y-4">
-                
-                <!-- 2a. AUTHENTIFIZIERUNG -->
-                <div id="auth-container" class="space-y-3">
-                    <div class="text-[10px] text-slate-400 tech-font">Erstelle einen Account oder spiele sofort anonym als Gast.</div>
-                    
-                    <div class="space-y-2">
-                        <div>
-                            <label class="block text-[8px] cyber-font text-slate-400 uppercase mb-0.5">Spielername (für Registrierung & Gast)</label>
-                            <input type="text" id="auth-name" placeholder="z.B. CyberPilot" class="w-full px-3 py-1.5 rounded cyber-input text-[11px]">
-                        </div>
-                        <div>
-                            <label class="block text-[8px] cyber-font text-slate-400 uppercase mb-0.5">E-Mail Adresse (für Login & Registrierung)</label>
-                            <input type="email" id="auth-email" placeholder="pilots@cybergrid.com" class="w-full px-3 py-1.5 rounded cyber-input text-[11px]">
-                        </div>
-                        <div>
-                            <label class="block text-[8px] cyber-font text-slate-400 uppercase mb-0.5">Passwort</label>
-                            <input type="password" id="auth-password" placeholder="••••••••" class="w-full px-3 py-1.5 rounded cyber-input text-[11px]">
-                        </div>
-                    </div>
+            <!-- Online-Ansicht (erscheint anstatt der Buttons, zentriert) -->
+            <div id="start-online-view" class="flex-col items-center w-full" style="display:none">
+                <div id="panel-multiplayer" class="cyber-panel cyber-panel-modal rounded-xl w-full overflow-y-auto p-4 space-y-4" style="max-height:58vh">
 
-                    <div class="flex flex-col gap-2 pt-2">
-                        <div class="flex gap-2">
-                            <button id="btn-login-email" class="flex-1 py-2 rounded btn-cyber-primary text-[9px] uppercase tracking-wider">EINLOGGEN</button>
-                            <button id="btn-register-email" class="flex-1 py-2 rounded btn-cyber-secondary text-[9px] uppercase tracking-wider">REGISTRIEREN</button>
-                        </div>
-                        <button id="btn-login-guest" class="w-full py-2 rounded btn-cyber-accent text-[9px] uppercase tracking-wider">ALS GAST SPIELEN</button>
-                    </div>
-                    
-                    <div id="auth-error-msg" class="text-rose-400 text-[10px] tech-font text-center mt-1 hidden"></div>
-                </div>
-
-                <!-- 2b. LOBBY MATCHMAKING -->
-                <div id="lobby-container" class="hidden space-y-4">
-                    <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-                        <div>
-                            <div class="cyber-font text-[10px] text-slate-200">PILOT: <span id="lobby-pilot-name" class="text-indigo-400 font-black">Gast</span></div>
-                            <div class="tech-font text-[9px] text-slate-400">Siege/Niederlagen: <span id="lobby-pilot-stats" class="text-slate-300">0 / 0</span></div>
-                        </div>
-                        <button id="btn-logout" class="py-1 px-2.5 rounded btn-cyber-secondary text-[8px] uppercase tracking-wider">Abmelden</button>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3 pt-1">
-                        <div class="border border-indigo-500/20 bg-slate-950/20 rounded-xl p-3 flex flex-col justify-between h-28">
+                    <!-- 2a. AUTHENTIFIZIERUNG -->
+                    <div id="auth-container" class="space-y-3">
+                        <div class="text-[10px] text-slate-400 tech-font">Erstelle einen Account oder spiele sofort anonym als Gast.</div>
+                        <div class="space-y-2">
                             <div>
-                                <h3 class="cyber-font text-[9px] text-indigo-300 font-bold uppercase mb-1">Spiel Hosten</h3>
-                                <p class="text-[9px] text-slate-400 tech-font leading-tight">Erstelle eine neue Lobby und teile den Code mit einem Freund.</p>
+                                <label class="block text-[8px] cyber-font text-slate-400 uppercase mb-0.5">Spielername (für Registrierung &amp; Gast)</label>
+                                <input type="text" id="auth-name" placeholder="z.B. CyberPilot" class="w-full px-3 py-1.5 rounded cyber-input text-[11px]">
                             </div>
-                            <button id="btn-create-lobby" class="w-full py-1.5 rounded btn-cyber-primary text-[9px]">LOBBY ERSTELLEN</button>
-                        </div>
-
-                        <div class="border border-indigo-500/20 bg-slate-950/20 rounded-xl p-3 flex flex-col justify-between h-28">
                             <div>
-                                <h3 class="cyber-font text-[9px] text-indigo-300 font-bold uppercase mb-1">Spiel Beitreten</h3>
-                                <input type="text" id="join-room-code" placeholder="CODE" class="w-full px-2 py-1 rounded cyber-input text-center text-xs tracking-widest uppercase font-bold mb-1.5 h-7">
+                                <label class="block text-[8px] cyber-font text-slate-400 uppercase mb-0.5">E-Mail Adresse (für Login &amp; Registrierung)</label>
+                                <input type="email" id="auth-email" placeholder="pilots@cybergrid.com" class="w-full px-3 py-1.5 rounded cyber-input text-[11px]">
                             </div>
-                            <button id="btn-join-lobby" class="w-full py-1.5 rounded btn-cyber-accent text-[9px]">BEITRETEN</button>
+                            <div>
+                                <label class="block text-[8px] cyber-font text-slate-400 uppercase mb-0.5">Passwort</label>
+                                <input type="password" id="auth-password" placeholder="••••••••" class="w-full px-3 py-1.5 rounded cyber-input text-[11px]">
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-2 pt-2">
+                            <div class="flex gap-2">
+                                <button id="btn-login-email" class="flex-1 py-2 rounded btn-cyber-primary text-[9px] uppercase tracking-wider">EINLOGGEN</button>
+                                <button id="btn-register-email" class="flex-1 py-2 rounded btn-cyber-secondary text-[9px] uppercase tracking-wider">REGISTRIEREN</button>
+                            </div>
+                            <button id="btn-login-guest" class="w-full py-2 rounded btn-cyber-accent text-[9px] uppercase tracking-wider">ALS GAST SPIELEN</button>
+                        </div>
+                        <div id="auth-error-msg" class="text-rose-400 text-[10px] tech-font text-center mt-1 hidden"></div>
+                    </div>
+
+                    <!-- 2b. LOBBY MATCHMAKING (direkt sichtbar) -->
+                    <div id="lobby-container" class="space-y-4">
+                        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                            <div>
+                                <div class="cyber-font text-[10px] text-slate-200">PILOT: <span id="lobby-pilot-name" class="text-indigo-400 font-black">Gast</span></div>
+                                <div class="tech-font text-[9px] text-slate-400">Siege/Niederlagen: <span id="lobby-pilot-stats" class="text-slate-300">0 / 0</span></div>
+                            </div>
+                            <button id="btn-logout" class="py-1 px-2.5 rounded btn-cyber-secondary text-[8px] uppercase tracking-wider">Abmelden</button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 pt-1">
+                            <div class="border border-indigo-500/20 bg-slate-950/20 rounded-xl p-3 flex flex-col justify-between h-28">
+                                <div>
+                                    <h3 class="cyber-font text-[9px] text-indigo-300 font-bold uppercase mb-1">Spiel Hosten</h3>
+                                    <p class="text-[9px] text-slate-400 tech-font leading-tight">Erstelle eine neue Lobby und teile den Code mit einem Freund.</p>
+                                </div>
+                                <button id="btn-create-lobby" class="w-full py-1.5 rounded btn-cyber-primary text-[9px]">LOBBY ERSTELLEN</button>
+                            </div>
+                            <div class="border border-indigo-500/20 bg-slate-950/20 rounded-xl p-3 flex flex-col justify-between h-28">
+                                <div>
+                                    <h3 class="cyber-font text-[9px] text-indigo-300 font-bold uppercase mb-1">Spiel Beitreten</h3>
+                                    <input type="text" id="join-room-code" placeholder="CODE" class="w-full px-2 py-1 rounded cyber-input text-center text-xs tracking-widest uppercase font-bold mb-1.5 h-7">
+                                </div>
+                                <button id="btn-join-lobby" class="w-full py-1.5 rounded btn-cyber-accent text-[9px]">BEITRETEN</button>
+                            </div>
+                        </div>
+                        <div class="border border-indigo-500/20 rounded-xl p-3 bg-slate-950/40">
+                            <h3 class="cyber-font text-[9px] text-slate-200 font-black tracking-wider border-b border-slate-800 pb-1 mb-1.5 uppercase flex items-center gap-1">
+                                <i class="fa-solid fa-trophy text-amber-500"></i> TOP 10 PILOTEN (LEADERBOARD)
+                            </h3>
+                            <div class="max-h-24 overflow-y-auto pr-1 text-[9px] tech-font space-y-1" id="leaderboard-list">
+                                <div class="text-slate-500 text-center py-2">Lade Pilotendaten...</div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Leaderboard -->
-                    <div class="border border-indigo-500/20 rounded-xl p-3 bg-slate-950/40">
-                        <h3 class="cyber-font text-[9px] text-slate-200 font-black tracking-wider border-b border-slate-800 pb-1 mb-1.5 uppercase flex items-center gap-1">
-                            <i class="fa-solid fa-trophy text-amber-500"></i> TOP 10 PILOTEN (LEADERBOARD)
-                        </h3>
-                        <div class="max-h-24 overflow-y-auto pr-1 text-[9px] tech-font space-y-1" id="leaderboard-list">
-                            <div class="text-slate-500 text-center py-2">Lade Pilotendaten...</div>
+                    <!-- 2c. WAITING ROOM -->
+                    <div id="waiting-container" class="hidden space-y-4">
+                        <div class="flex flex-col items-center py-4 border border-indigo-500/20 rounded-2xl bg-indigo-950/10">
+                            <div class="cyber-font text-[9px] text-slate-400 uppercase tracking-widest">DEIN LOBBY-CODE</div>
+                            <div id="waiting-room-code" class="cyber-font text-2xl font-black text-amber-400 tracking-widest my-1 drop-shadow-[0_0_8px_rgba(245,158,11,0.6)] animate-pulse">ABCD</div>
+                            <div class="tech-font text-[10px] text-slate-300 mt-2 flex items-center gap-1.5">
+                                <span class="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-ping"></span>
+                                WARTE AUF GEGNER...
+                            </div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- 2c. WAITING ROOM -->
-                <div id="waiting-container" class="hidden space-y-4">
-                    <div class="flex flex-col items-center py-4 border border-indigo-500/20 rounded-2xl bg-indigo-950/10">
-                        <div class="cyber-font text-[9px] text-slate-400 uppercase tracking-widest">DEIN LOBBY-CODE</div>
-                        <div id="waiting-room-code" class="cyber-font text-2xl font-black text-amber-400 tracking-widest my-1 drop-shadow-[0_0_8px_rgba(245,158,11,0.6)] animate-pulse">ABCD</div>
-                        <div class="tech-font text-[10px] text-slate-300 mt-2 flex items-center gap-1.5">
-                            <span class="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-ping"></span>
-                            WARTE AUF GEGNER...
+                        <div class="space-y-1.5 text-[10px] tech-font bg-slate-950/30 p-2.5 rounded-xl border border-slate-800/60">
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Host (Spieler 1):</span>
+                                <span id="waiting-p1-name" class="font-bold text-emerald-400">Lade...</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Gast (Spieler 2):</span>
+                                <span id="waiting-p2-name" class="font-bold text-rose-400">Warten...</span>
+                            </div>
                         </div>
-                    </div>
-
-                    <div class="space-y-1.5 text-[10px] tech-font bg-slate-950/30 p-2.5 rounded-xl border border-slate-800/60">
-                        <div class="flex justify-between">
-                            <span class="text-slate-400">Host (Spieler 1):</span>
-                            <span id="waiting-p1-name" class="font-bold text-emerald-400">Lade...</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-400">Gast (Spieler 2):</span>
-                            <span id="waiting-p2-name" class="font-bold text-rose-400">Warten...</span>
-                        </div>
+                        <button id="btn-leave-lobby" class="w-full py-2 rounded btn-cyber-secondary text-[9px] uppercase tracking-wider">Lobby verlassen</button>
                     </div>
 
-                    <button id="btn-leave-lobby" class="w-full py-2 rounded btn-cyber-secondary text-[9px] uppercase tracking-wider">Lobby verlassen</button>
-                </div>
+                </div><!-- /panel-multiplayer -->
+                <button onclick="document.getElementById('start-online-view').style.display='none';document.getElementById('start-buttons-view').style.display='flex'"
+                    class="cyber-font text-[9px] mt-3 bg-slate-800/70 text-slate-300 font-bold py-2 px-8 rounded-lg cursor-pointer tracking-widest border border-slate-500/40 btn-back-glow">
+                    ← ZURÜCK
+                </button>
             </div>
         </div>
-    </div>
+
+    </div><!-- /intro-modal -->
 
     <!-- Modulares Game Script -->
-    <script type="module" src="js/main.js?v=22"></script>
+    <script type="module" src="js/main.js?v=23"></script>
 </body>
 </html>
