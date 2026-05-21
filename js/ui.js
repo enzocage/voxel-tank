@@ -188,6 +188,11 @@ export function setPhase(newPhase) {
         syncPhase(newPhase);
     }
     
+    const dpad     = document.getElementById('mobile-dpad');
+    const fireZone = document.getElementById('mobile-fire-zone');
+    if (dpad)     dpad.style.display     = (newPhase === 'MOVE' || newPhase === 'AIM') ? 'block' : 'none';
+    if (fireZone) fireZone.style.display = newPhase === 'AIM' ? 'block' : 'none';
+
     if (newPhase === 'SELECT') {
         state.selectedTank = null;
         state.actionsRemaining = 15;

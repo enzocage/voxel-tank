@@ -96,6 +96,18 @@ canvas {
     animation: chargePulse 0.5s infinite;
 }
 
+/* Mobile D-Pad invisible touch buttons */
+.mobile-dpad-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.10);
+    -webkit-tap-highlight-color: transparent;
+    touch-action: none;
+}
+.mobile-dpad-btn:active {
+    background: rgba(255,255,255,0.14);
+    border-color: rgba(255,255,255,0.28);
+}
+
 ::-webkit-scrollbar {
     width: 3px;
 }

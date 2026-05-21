@@ -394,6 +394,20 @@
 
     </div><!-- /intro-modal -->
 
+    <!-- Mobile D-Pad (invisible touch zones, shown in MOVE + AIM) -->
+    <div id="mobile-dpad" class="fixed select-none" style="display:none; bottom:160px; left:16px; z-index:25; width:168px; height:168px;">
+        <button id="dpad-up"     style="position:absolute;top:0;left:56px;width:56px;height:56px;"   class="mobile-dpad-btn rounded-xl flex items-center justify-center pointer-events-auto"><i class="fa-solid fa-chevron-up    text-white/20 text-xs"></i></button>
+        <button id="dpad-left"   style="position:absolute;top:56px;left:0;width:56px;height:56px;"   class="mobile-dpad-btn rounded-xl flex items-center justify-center pointer-events-auto"><i class="fa-solid fa-chevron-left  text-white/20 text-xs"></i></button>
+        <button id="dpad-center" style="position:absolute;top:56px;left:56px;width:56px;height:56px;" class="mobile-dpad-btn rounded-xl flex items-center justify-center pointer-events-auto"><i class="fa-solid fa-circle-dot text-white/10 text-xs"></i></button>
+        <button id="dpad-right"  style="position:absolute;top:56px;left:112px;width:56px;height:56px;" class="mobile-dpad-btn rounded-xl flex items-center justify-center pointer-events-auto"><i class="fa-solid fa-chevron-right text-white/20 text-xs"></i></button>
+        <button id="dpad-down"   style="position:absolute;top:112px;left:56px;width:56px;height:56px;" class="mobile-dpad-btn rounded-xl flex items-center justify-center pointer-events-auto"><i class="fa-solid fa-chevron-down  text-white/20 text-xs"></i></button>
+    </div>
+
+    <!-- Mobile Fire Zone (invisible, shown only in AIM) -->
+    <div id="mobile-fire-zone" class="fixed select-none" style="display:none; bottom:160px; right:16px; z-index:25;">
+        <button id="dpad-fire" class="mobile-dpad-btn rounded-2xl flex items-center justify-center pointer-events-auto" style="width:110px;height:110px;"><i class="fa-solid fa-crosshairs text-white/15 text-2xl"></i></button>
+    </div>
+
     <!-- Modulares Game Script -->
     <script type="module" src="js/main.js?v=23"></script>
 </body>

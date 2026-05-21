@@ -282,4 +282,76 @@ export function setupInput() {
         state.renderer.domElement.addEventListener('pointerdown', onPointerDown);
         state.renderer.domElement.addEventListener('pointerup', onPointerUp);
     }
+
+    // ── Mobile D-Pad ────────────────────────────────────────────────────────
+    const dpadKeyMap = {
+        up:    ['KeyW',  'ArrowUp'],
+        down:  ['KeyS',  'ArrowDown'],
+        left:  ['KeyA',  'ArrowLeft'],
+        right: ['KeyD',  'ArrowRight'],
+    };
+    const moveRepeat = {};
+
+    function triggerMoveStep(forward) {
+        if (!state.selectedTank || !isLocalTurn() || state.moveCooldown) return;
+        const absoluteYaw = state.selectedTank.bodyYaw + state.selectedTank.turretYaw;
+        const dir = getCardinalDirectionFromYaw(absoluteYaw, forward);
+        attemptStep(dir.dx, dir.dz);
+        state.moveCooldown = true;
+        setTimeout(() => { state.moveCooldown = false; }, 180);
+    }
+
+    function dpadPress(dir) {
+        if (!isLocalTurn()) return;
+        dpadKeyMap[dir].forEach(k => state.keysPressed[k] = true);
+        if (state.currentPhase === 'MOVE' && (dir === 'up' || dir === 'down')) {
+            triggerMoveStep(dir === 'up');
+            moveRepeat[dir] = setInterval(() => {
+                if (state.currentPhase === 'MOVE') triggerMoveStep(dir === 'up');
+                else dpadRelease(dir);
+            }, 220);
+        }
+    }
+
+    function dpadRelease(dir) {
+        dpadKeyMap[dir].forEach(k => state.keysPressed[k] = false);
+        if (moveRepeat[dir]) { clearInterval(moveRepeat[dir]); moveRepeat[dir] = null; }
+    }
+
+    ['up', 'down', 'left', 'right'].forEach(dir => {
+        const btn = document.getElementById('dpad-' + dir);
+        if (!btn) return;
+        btn.addEventListener('touchstart', e => { e.preventDefault(); dpadPress(dir); },   { passive: false });
+        btn.addEventListener('touchend',   e => { e.preventDefault(); dpadRelease(dir); }, { passive: false });
+        btn.addEventListener('touchcancel',e => { e.preventDefault(); dpadRelease(dir); }, { passive: false });
+        btn.addEventListener('mousedown',  () => dpadPress(dir));
+        btn.addEventListener('mouseup',    () => dpadRelease(dir));
+        btn.addEventListener('mouseleave', () => dpadRelease(dir));
+    });
+
+    const dpadCenter = document.getElementById('dpad-center');
+    if (dpadCenter) {
+        const endMove = e => {
+            if (e.preventDefault) e.preventDefault();
+            if (state.currentPhase === 'MOVE' && isLocalTurn()) { playSound('click'); setPhase('AIM'); }
+        };
+        dpadCenter.addEventListener('touchstart', endMove, { passive: false });
+        dpadCenter.addEventListener('click', endMove);
+    }
+
+    const dpadFire = document.getElementById('dpad-fire');
+    if (dpadFire) {
+        dpadFire.addEventListener('touchstart', e => {
+            e.preventDefault();
+            if (state.currentPhase === 'AIM' && state.selectedTank && projectiles.length === 0 && !state.isGameOver && isLocalTurn()) startCharging();
+        }, { passive: false });
+        dpadFire.addEventListener('touchend', e => {
+            e.preventDefault();
+            if (state.isCharging) fireProjectile();
+        }, { passive: false });
+        dpadFire.addEventListener('mousedown', () => {
+            if (state.currentPhase === 'AIM' && state.selectedTank && projectiles.length === 0 && !state.isGameOver && isLocalTurn()) startCharging();
+        });
+        dpadFire.addEventListener('mouseup', () => { if (state.isCharging) fireProjectile(); });
+    }
 }
