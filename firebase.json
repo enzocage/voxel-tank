@@ -5,7 +5,9 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**",
-      "FIREBASE_SETUP.md"
+      "FIREBASE_SETUP.md",
+      "start.bat",
+      "*.bat"
     ]
   }
 }

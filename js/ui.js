@@ -453,7 +453,9 @@ export function nextTurn(targetPlayer = null) {
 
     const banner = document.getElementById('turn-banner');
     const bannerText = document.getElementById('turn-banner-text');
-    bannerText.innerText = `SPIELER ${state.activePlayer} AM ZUG`;
+    bannerText.innerText = (state.isAIMode && state.activePlayer === 2)
+        ? 'KI PLANT ANGRIFF...'
+        : `SPIELER ${state.activePlayer} AM ZUG`;
     bannerText.className = `cyber-font text-lg md:text-2xl font-black tracking-widest ${state.activePlayer === 1 ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'text-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.5)]'}`;
     
     banner.classList.remove('opacity-0', 'pointer-events-none');
@@ -471,6 +473,13 @@ export function nextTurn(targetPlayer = null) {
     // Phase auf Auswahl zurücksetzen
     console.log('[CAM] nextTurn → calling setPhase(SELECT) | activePlayer now:', state.activePlayer);
     setPhase('SELECT');
+
+    // KI-Zug auslösen wenn Spieler 2 an der Reihe ist
+    if (state.isAIMode && state.activePlayer === 2 && !state.isGameOver) {
+        import('./ai.js?v=23').then(ai => {
+            setTimeout(() => ai.aiTakeTurn(), 1800);
+        });
+    }
 }
 
 export function checkVictory() {

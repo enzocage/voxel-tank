@@ -18,6 +18,7 @@ import { syncActiveTankState, syncActionsRemaining, syncShotLaunch } from './mul
 
 function isLocalTurn() {
     if (state.isMultiplayer) return state.activePlayer === state.localPlayerRole;
+    if (state.isAIMode && state.activePlayer === 2) return false;
     return true;
 }
 

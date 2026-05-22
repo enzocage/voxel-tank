@@ -692,6 +692,18 @@ function setupUIEventListeners() {
         });
     }
 
+    const btnStartAi = document.getElementById('btn-start-ai');
+    if (btnStartAi) {
+        btnStartAi.addEventListener('click', () => {
+            playSound('click');
+            state.isAIMode = true;
+            const intro = document.getElementById('intro-modal');
+            if (intro) intro.classList.add('opacity-0', 'pointer-events-none');
+            window.dispatchEvent(new Event('resize'));
+            import('./ai.js?v=23').then(ai => ai.initAI());
+        });
+    }
+
     const helpOverlay = document.getElementById('help-overlay');
     const btnOpenHelp = document.getElementById('btn-open-help');
     const btnCloseHelp = document.getElementById('btn-close-help');

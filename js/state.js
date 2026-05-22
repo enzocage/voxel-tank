@@ -21,6 +21,8 @@ export const state = {
     shieldCharges: { 1: 1, 2: 1 },
     pendingBlocks: [],
 
+    isAIMode: false,
+
     // Multiplayer State
     isMultiplayer: false,
     localPlayerRole: null,
