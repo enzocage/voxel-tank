@@ -251,26 +251,26 @@
             <h1 class="cyber-font text-3xl md:text-4xl font-black text-white tracking-[0.2em] drop-shadow-[0_2px_24px_rgba(0,0,0,1)] text-center">VOXEL TANK</h1>
             <p class="tech-font text-[11px] text-indigo-200 font-bold tracking-widest uppercase drop-shadow-md mb-1">Space Tactical Combat · 3-Phasen Edition</p>
 
-            <!-- Standard-Ansicht: 3 pulsierende Buttons -->
+            <!-- Standard-Ansicht: 4 pulsierende Buttons -->
             <div id="start-buttons-view" class="flex flex-col items-center gap-5 w-full">
+                <button id="btn-start-ai"
+                    class="cyber-font text-sm bg-violet-700/80 hover:bg-violet-600 text-white font-bold py-3 w-56 rounded-lg cursor-pointer tracking-widest border border-violet-400/30 btn-ai-glow">
+                    1 PLAYER AI
+                </button>
                 <button id="btn-start-game"
                     onclick="document.getElementById('intro-modal').classList.add('opacity-0','pointer-events-none');window.dispatchEvent(new Event('resize'))"
-                    class="cyber-font text-sm bg-emerald-600/80 hover:bg-emerald-500 text-white font-bold py-3 w-48 rounded-lg cursor-pointer tracking-widest border border-emerald-400/30 btn-start-glow">
-                    LOKAL
-                </button>
-                <button id="btn-open-help"
-                    onclick="document.getElementById('start-buttons-view').style.display='none';document.getElementById('start-help-view').style.display='flex'"
-                    class="cyber-font text-sm bg-indigo-700/70 hover:bg-indigo-600 text-white font-bold py-3 w-48 rounded-lg cursor-pointer tracking-widest border border-indigo-400/30 btn-help-glow">
-                    HELP
+                    class="cyber-font text-sm bg-emerald-600/80 hover:bg-emerald-500 text-white font-bold py-3 w-56 rounded-lg cursor-pointer tracking-widest border border-emerald-400/30 btn-start-glow">
+                    2 PLAYER LOCAL
                 </button>
                 <button id="btn-open-online"
                     onclick="document.getElementById('start-buttons-view').style.display='none';document.getElementById('start-online-view').style.display='flex'"
-                    class="cyber-font text-sm font-bold py-3 w-48 rounded-lg cursor-pointer tracking-widest btn-online-glow">
-                    ONLINE
+                    class="cyber-font text-sm font-bold py-3 w-56 rounded-lg cursor-pointer tracking-widest btn-online-glow">
+                    2 PLAYER ONLINE
                 </button>
-                <button id="btn-start-ai"
-                    class="cyber-font text-sm bg-violet-700/80 hover:bg-violet-600 text-white font-bold py-3 w-48 rounded-lg cursor-pointer tracking-widest border border-violet-400/30 btn-ai-glow">
-                    AI TANKS
+                <button id="btn-open-help"
+                    onclick="document.getElementById('start-buttons-view').style.display='none';document.getElementById('start-help-view').style.display='flex'"
+                    class="cyber-font text-sm bg-indigo-700/70 hover:bg-indigo-600 text-white font-bold py-3 w-56 rounded-lg cursor-pointer tracking-widest border border-indigo-400/30 btn-help-glow">
+                    HELP
                 </button>
             </div>
 
